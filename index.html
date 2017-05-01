@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>maildown</title>
+  <style>
+    #app{
+      display: flex;
+      height: 100%;
+    }
+    body, html{
+      height: 100%;
+      margin: 0;
+    }
+    #input{
+      background: #333;
+      color: white;
+    }
+
+    textarea{
+      font-family: monospace, serif;
+      font-size: 1rem;
+      flex: 1;
+      padding: 1rem;
+    }
+  </style>
+
+</head>
+<body>
+  <div id="app">
+<textarea id="input" cols="30" rows="10">
+毎度お世話になっております。
+
+このツールは、Markdownから日本企業っぽいメールに変換を行なうことが出来ます。大変申し訳ございません。
+大変申し上げにくいのですが、見出しやリストなどを全角記号に変換する他、メール独特の80文字折り返し文化に対応するなどの機能がございます。
+折り返しにはTinySegmenterを使った簡易分かち書きを利用することで、単語途中での改行を防止する対応を行いました。
+ご迷惑をおかけし、誠に申し訳ございません。
+
+## 例の件の対応
+
+あれの件ですが、大変申し訳ございません。
+もうしばらくお待ちいただけますと幸いです。
+直ちに、商品を手配させていただき、
+また、後ほど１００円値引きクーポン券をご送付させて頂きます。
+
+70文字で折り返しを行います。
+
+今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。今後共当社をよろしくお願いいたします。
+
+
+---
+
+# 原因
+
+考えられる原因は３つです。
+
+ 1. 倉庫が燃えた
+ 1. 担当者が風邪をひいた
+ 1. その他
+
+# 再発防止策
+
+ * よく寝る
+ * 栄養をとる
+ * 倉庫のそばで焼き芋をしない
+
+再発防止のため、本日はこれにて帰宅し、自宅療養させて頂きます。
+
+以上、よろしくお願いいたします。
+</textarea>
+    <textarea id="output" cols="30" rows="10"></textarea>
+  </div>
+  <script src="bundle.js"></script>
+  
+</body>
+</html>
