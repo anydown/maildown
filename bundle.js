@@ -28,7 +28,7 @@ function convert(input) {
         if (node.depth === 1) {
           output += "【" + node.children.map(item => item.value).join("") + "】" + "\n"
         }
-        if (node.depth === 2) {
+        if (node.depth >= 2) {
           output += "■" + node.children.map(item => item.value).join("") + "" + "\n"
         }
         output += "\n"
