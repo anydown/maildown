@@ -1,8 +1,8 @@
-var kaigyo = require("./kaigyo").kaigyo
-var parse = require("markdown-to-ast").parse,
-  Syntax = require("markdown-to-ast").Syntax;
-var traverse = require("txt-ast-traverse").traverse,
-  VisitorOption = require("txt-ast-traverse").VisitorOption;
+var kaigyo = require("./lib/kaigyo")
+var parse = require("markdown-to-ast").parse;
+var Syntax = require("markdown-to-ast").Syntax;
+var traverse = require("txt-ast-traverse").traverse;
+var VisitorOption = require("txt-ast-traverse").VisitorOption;
 
 function convert(input) {
   var output = ""
