@@ -15,6 +15,7 @@
     "markdown-to-ast": "^3.4.0",
     "tape": "^4.6.3",
     "txt-ast-traverse": "^1.2.1",
-    "watchify": "^3.9.0"
+    "watchify": "^3.9.0",
+    "word-table": "^1.0.0"
   }
 }
