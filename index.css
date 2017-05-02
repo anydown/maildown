@@ -14,8 +14,8 @@ body, html {
 }
 
 textarea {
-  font-family: monospace, serif;
-  font-size: 1rem;
+  font-family: Osaka-mono, "Osaka-等幅", "ＭＳ ゴシック", monospace;
+  font-size: 14px;
   flex: 1;
   padding: 1rem;
 }
