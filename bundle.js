@@ -1,13 +1,44 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var kaigyo = require("./lib/kaigyo")
+var $input = document.querySelector("#input")
+var $output = document.querySelector("#output")
+var convert = require("./lib/convert")
+
+setInterval(function () {
+  $output.value = convert($input.value)
+}, 1000)
+
+
+},{"./lib/convert":2}],2:[function(require,module,exports){
+var kaigyo = require("./kaigyo")
 var parse = require("markdown-to-ast").parse;
 var Syntax = require("markdown-to-ast").Syntax;
 var traverse = require("txt-ast-traverse").traverse;
 var VisitorOption = require("txt-ast-traverse").VisitorOption;
+var WordTable = require("word-table")
 
+
+function nodeToString(node) {
+  var output = ""
+  if (node.value) {
+    output += node.value
+  }
+  if (node.children) {
+    node.children.forEach((leaf) => {
+      output += nodeToString(leaf)
+    })
+  }
+  return output
+}
+
+/**
+ * convert AST to plaintext
+ * @param {*} AST
+ */
 function convert(input) {
   var output = []
   var AST = parse(input);
+  var tempTable = []
+  var tempTableRow = []
 
   traverse(AST, {
     enter(node) {
@@ -16,25 +47,29 @@ function convert(input) {
         case Syntax.Document:
           break;
         case Syntax.Paragraph:
-          output.push(kaigyo(node.children.map(item => item.value).join("")))
+          output.push(kaigyo(nodeToString(node)))
           output.push("")
           return VisitorOption.Skip;
           break;
 
         case Syntax.BlockQuote:
+          output.push(nodeToString(node))
+          output.push("")
           break;
 
         case Syntax.ListItem:
+          //ListItem要素ではolかulか判断出来ないので、上位のListで処理を行っている
+          //でも、これだと入れ子要素はレンダリングできなそう（いま出来てない）
           break;
 
         case Syntax.List:
           var toText = item => item.value
           if (node.ordered) {
-            var toItem = (listitem, i) => "　（" + (i + 1) + "）" + listitem.children[0].children.map(toText).join("") + "\n"
+            var toItem = (listitem, i) => "　（" + (i + 1) + "）" + nodeToString(listitem) + "\n"
             var listtext = node.children.map(toItem).join("")
             output.push(listtext)
           } else {
-            var toItem = listitem => "　・" + listitem.children[0].children.map(toText).join("") + "\n"
+            var toItem = listitem => "　・" + nodeToString(listitem) + "\n"
             var listtext = node.children.map(toItem).join("")
             output.push(listtext)
           }
@@ -55,9 +90,13 @@ function convert(input) {
           break;
 
         case Syntax.CodeBlock:
+          output.push(nodeToString(node))
+          output.push("")
           break;
 
         case Syntax.Html:
+          output.push(nodeToString(node))
+          output.push("")
           break;
 
         case Syntax.ReferenceDef:
@@ -91,28 +130,42 @@ function convert(input) {
         case Syntax.Code:
           break;
 
+        case "table":
+          tempTable = []
+          break;
+        case "tableCell":
+          tempTableRow.push(nodeToString(node))
         default:
           break;
       }
     },
     leave(node) {
-      //console.log("leave", node.type);
+      switch (node.type) {
+        case "table":
+          var wt = new WordTable(tempTable[0],tempTable.slice(1));
+          output.push(wt.string())
+          output.push("")
+          
+        case "tableRow":
+          tempTable.push(tempTableRow)
+          tempTableRow = []
+        default:
+          break;
+
+      }
     }
   });
   return output.join("\n")
 }
 
-var $input = document.querySelector("#input")
-var $output = document.querySelector("#output")
+module.exports = convert
+},{"./kaigyo":3,"markdown-to-ast":26,"txt-ast-traverse":54,"word-table":59}],3:[function(require,module,exports){
+var TinySegmenter = require("./tiny_segmenter")
 
-setInterval(function () {
-  $output.value = convert($input.value)
-}, 1000)
-
-
-},{"./lib/kaigyo":2,"markdown-to-ast":27,"txt-ast-traverse":51}],2:[function(require,module,exports){
-var ts = require("./tiny_segmenter")
-
+/**
+ * Get string length, count full width char as 2
+ * @param {string} str 
+ */
 function charcount(str) {
   len = 0;
   str = escape(str);
@@ -128,10 +181,13 @@ function charcount(str) {
   return len;
 }
 
+/**
+ * Split a string when line length > 70
+ * @param {string} input 
+ */
 function kaigyo(input){
-
-  var segmenter = new ts()
-  var segs = segmenter.segment(input);
+  var tinySegmenter = new TinySegmenter()
+  var segs = tinySegmenter.segment(input);
   
   var result = ""
   var lineLength = 0
@@ -152,7 +208,7 @@ function kaigyo(input){
 }
 
 module.exports = kaigyo
-},{"./tiny_segmenter":3}],3:[function(require,module,exports){
+},{"./tiny_segmenter":4}],4:[function(require,module,exports){
 // TinySegmenter 0.1 -- Super compact Japanese tokenizer in Javascript
 // (c) 2008 Taku Kudo <taku@chasen.org>
 // TinySegmenter is freely distributable under the terms of a new BSD licence.
@@ -331,7 +387,7 @@ TinySegmenter.prototype.segment = function(input) {
 }
 
 module.exports = TinySegmenter
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -367,7 +423,7 @@ function bail(err) {
   }
 }
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 
 /*
@@ -451,7 +507,7 @@ exports.lowerBound = lowerBound;
 exports.upperBound = upperBound;
 exports.binarySearch = binarySearch;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -499,7 +555,7 @@ function ccount(value, character) {
   return count;
 }
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports={
   "nbsp": " ",
   "iexcl": "¡",
@@ -755,7 +811,7 @@ module.exports={
   "euro": "€"
 }
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 module.exports={
   "AElig": "Æ",
   "AMP": "&",
@@ -865,7 +921,7 @@ module.exports={
   "yuml": "ÿ"
 }
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports={
   "AEli": "Æ",
   "AElig": "Æ",
@@ -3091,7 +3147,7 @@ module.exports={
   "zwnj": "‌"
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports={
   "0": "�",
   "128": "€",
@@ -3123,7 +3179,7 @@ module.exports={
   "159": "Ÿ"
 }
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -3152,7 +3208,7 @@ function collapse(value) {
   return String(value).replace(/\s+/g, ' ');
 }
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (process){
 /**
  * This is the web browser implementation of `debug()`.
@@ -3341,7 +3397,7 @@ function localstorage() {
 }
 
 }).call(this,require('_process'))
-},{"./debug":13,"_process":32}],13:[function(require,module,exports){
+},{"./debug":14,"_process":44}],14:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3545,7 +3601,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":29}],14:[function(require,module,exports){
+},{"ms":41}],15:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -3849,7 +3905,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -3937,7 +3993,7 @@ module.exports = function extend() {
 	return target;
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
 var slice = Array.prototype.slice;
 var toStr = Object.prototype.toString;
@@ -3987,17 +4043,17 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":16}],18:[function(require,module,exports){
+},{"./implementation":17}],19:[function(require,module,exports){
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":17}],19:[function(require,module,exports){
+},{"function-bind":18}],20:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -4022,7 +4078,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -4053,7 +4109,7 @@ function alphabetical(character) {
     (code >= 65 && code <= 90); /* A-Z */
 }
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -4084,7 +4140,7 @@ function alphanumerical(character) {
   return alphabetical(character) || decimal(character);
 }
 
-},{"is-alphabetical":20,"is-decimal":22}],22:[function(require,module,exports){
+},{"is-alphabetical":21,"is-decimal":23}],23:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -4114,7 +4170,7 @@ function decimal(character) {
   return code >= 48 && code <= 57; /* 0-9 */
 }
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -4146,7 +4202,119 @@ function hexadecimal(character) {
     (code >= 48 /* A */ && code <= 57 /* Z */);
 }
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
+// LICENSE : MIT
+"use strict";
+// Replace key to value mapping
+// This is not for Constants.
+var exports = {
+    "root": "Document",
+    "paragraph": "Paragraph",
+    "blockquote": "BlockQuote",
+    "listItem": "ListItem",
+    "list": "List",
+    "Bullet": "Bullet", // no need?
+    "heading": "Header",
+    "code": "CodeBlock",
+    "HtmlBlock": "Html",
+    "ReferenceDef": "ReferenceDef",
+    "thematicBreak": "HorizontalRule",
+    // inline block
+    'text': 'Str',
+    'break': 'Break',
+    'emphasis': 'Emphasis',
+    'strong': 'Strong',
+    'html': 'Html',
+    'link': 'Link',
+    'image': 'Image',
+    'inlineCode': 'Code',
+    'yaml': 'Yaml'
+};
+module.exports = exports;
+},{}],26:[function(require,module,exports){
+/*eslint-disable */
+// LICENSE : MIT
+
+"use strict";
+var traverse = require('traverse');
+var StructuredSource = require('structured-source');
+var debug = require("debug")("markdown-to-ast");
+var remarkAbstract = require("remark");
+var remark = remarkAbstract();
+/**
+ * parse markdown text and return ast mapped location info.
+ * @param {string} text
+ * @returns {TxtNode}
+ */
+function parse(text) {
+    var ast = remark.parse(text);
+    var SyntaxMap = require("./mapping/markdown-syntax-map");
+    var src = new StructuredSource(text);
+    traverse(ast).forEach(function (node) {
+        if (this.notLeaf) {
+            if (node.type) {
+                var replacedType = SyntaxMap[node.type];
+                if (!replacedType) {
+                    debug("replacedType : " + replacedType + " , node.type: " + node.type);
+                } else {
+                    node.type = replacedType;
+                }
+            }
+            // map `range`, `loc` and `raw` to node
+            if (node.position) {
+                var position = node.position;
+                var positionCompensated = {
+                    start: {line: position.start.line, column: position.start.column - 1},
+                    end: {line: position.end.line, column: position.end.column - 1}
+                };
+                var range = src.locationToRange(positionCompensated);
+                node.loc = positionCompensated;
+                node.range = range;
+                node.raw = text.slice(range[0], range[1]);
+                // Compatible for https://github.com/wooorm/unist, but hidden
+                Object.defineProperty(node, "position", {
+                    enumerable: false,
+                    configurable: false,
+                    writable: false,
+                    value: position
+                });
+
+            }
+        }
+    });
+    return ast;
+}
+module.exports = {
+    parse: parse,
+    Syntax: require("./union-syntax")
+};
+},{"./mapping/markdown-syntax-map":25,"./union-syntax":27,"debug":13,"remark":38,"structured-source":48,"traverse":50}],27:[function(require,module,exports){
+// LICENSE : MIT
+"use strict";
+// public key interface
+var exports = {
+    "Document": "Document", // must
+    "Paragraph": "Paragraph",
+    "BlockQuote": "BlockQuote",
+    "ListItem": "ListItem",
+    "List": "List",
+    "Header": "Header",
+    "CodeBlock": "CodeBlock",
+    "HtmlBlock": "HtmlBlock",
+    "ReferenceDef": "ReferenceDef",
+    "HorizontalRule": "HorizontalRule",
+    // inline
+    'Str': 'Str', // must
+    'Break': 'Break', // must
+    'Emphasis': 'Emphasis',
+    'Strong': 'Strong',
+    'Html': 'Html',
+    'Link': 'Link',
+    'Image': 'Image',
+    'Code': 'Code'
+};
+module.exports = exports;
+},{}],28:[function(require,module,exports){
 'use strict';
 
 /**
@@ -4199,7 +4367,7 @@ function longestStreak(value, character) {
 
 module.exports = longestStreak;
 
-},{}],25:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4485,1021 +4653,7 @@ function markdownTable(table, options) {
 
 module.exports = markdownTable;
 
-},{}],26:[function(require,module,exports){
-// LICENSE : MIT
-"use strict";
-// Replace key to value mapping
-// This is not for Constants.
-var exports = {
-    "root": "Document",
-    "paragraph": "Paragraph",
-    "blockquote": "BlockQuote",
-    "listItem": "ListItem",
-    "list": "List",
-    "Bullet": "Bullet", // no need?
-    "heading": "Header",
-    "code": "CodeBlock",
-    "HtmlBlock": "Html",
-    "ReferenceDef": "ReferenceDef",
-    "thematicBreak": "HorizontalRule",
-    // inline block
-    'text': 'Str',
-    'break': 'Break',
-    'emphasis': 'Emphasis',
-    'strong': 'Strong',
-    'html': 'Html',
-    'link': 'Link',
-    'image': 'Image',
-    'inlineCode': 'Code',
-    'yaml': 'Yaml'
-};
-module.exports = exports;
-},{}],27:[function(require,module,exports){
-/*eslint-disable */
-// LICENSE : MIT
-
-"use strict";
-var traverse = require('traverse');
-var StructuredSource = require('structured-source');
-var debug = require("debug")("markdown-to-ast");
-var remarkAbstract = require("remark");
-var remark = remarkAbstract();
-/**
- * parse markdown text and return ast mapped location info.
- * @param {string} text
- * @returns {TxtNode}
- */
-function parse(text) {
-    var ast = remark.parse(text);
-    var SyntaxMap = require("./mapping/markdown-syntax-map");
-    var src = new StructuredSource(text);
-    traverse(ast).forEach(function (node) {
-        if (this.notLeaf) {
-            if (node.type) {
-                var replacedType = SyntaxMap[node.type];
-                if (!replacedType) {
-                    debug("replacedType : " + replacedType + " , node.type: " + node.type);
-                } else {
-                    node.type = replacedType;
-                }
-            }
-            // map `range`, `loc` and `raw` to node
-            if (node.position) {
-                var position = node.position;
-                var positionCompensated = {
-                    start: {line: position.start.line, column: position.start.column - 1},
-                    end: {line: position.end.line, column: position.end.column - 1}
-                };
-                var range = src.locationToRange(positionCompensated);
-                node.loc = positionCompensated;
-                node.range = range;
-                node.raw = text.slice(range[0], range[1]);
-                // Compatible for https://github.com/wooorm/unist, but hidden
-                Object.defineProperty(node, "position", {
-                    enumerable: false,
-                    configurable: false,
-                    writable: false,
-                    value: position
-                });
-
-            }
-        }
-    });
-    return ast;
-}
-module.exports = {
-    parse: parse,
-    Syntax: require("./union-syntax")
-};
-},{"./mapping/markdown-syntax-map":26,"./union-syntax":28,"debug":12,"remark":41,"structured-source":45,"traverse":47}],28:[function(require,module,exports){
-// LICENSE : MIT
-"use strict";
-// public key interface
-var exports = {
-    "Document": "Document", // must
-    "Paragraph": "Paragraph",
-    "BlockQuote": "BlockQuote",
-    "ListItem": "ListItem",
-    "List": "List",
-    "Header": "Header",
-    "CodeBlock": "CodeBlock",
-    "HtmlBlock": "HtmlBlock",
-    "ReferenceDef": "ReferenceDef",
-    "HorizontalRule": "HorizontalRule",
-    // inline
-    'Str': 'Str', // must
-    'Break': 'Break', // must
-    'Emphasis': 'Emphasis',
-    'Strong': 'Strong',
-    'Html': 'Html',
-    'Link': 'Link',
-    'Image': 'Image',
-    'Code': 'Code'
-};
-module.exports = exports;
-},{}],29:[function(require,module,exports){
-/**
- * Helpers.
- */
-
-var s = 1000
-var m = s * 60
-var h = m * 60
-var d = h * 24
-var y = d * 365.25
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function (val, options) {
-  options = options || {}
-  var type = typeof val
-  if (type === 'string' && val.length > 0) {
-    return parse(val)
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ?
-			fmtLong(val) :
-			fmtShort(val)
-  }
-  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val))
-}
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str)
-  if (str.length > 10000) {
-    return
-  }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str)
-  if (!match) {
-    return
-  }
-  var n = parseFloat(match[1])
-  var type = (match[2] || 'ms').toLowerCase()
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n
-    default:
-      return undefined
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd'
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h'
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm'
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's'
-  }
-  return ms + 'ms'
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms'
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) {
-    return
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's'
-}
-
 },{}],30:[function(require,module,exports){
-var wrappy = require('wrappy')
-module.exports = wrappy(once)
-module.exports.strict = wrappy(onceStrict)
-
-once.proto = once(function () {
-  Object.defineProperty(Function.prototype, 'once', {
-    value: function () {
-      return once(this)
-    },
-    configurable: true
-  })
-
-  Object.defineProperty(Function.prototype, 'onceStrict', {
-    value: function () {
-      return onceStrict(this)
-    },
-    configurable: true
-  })
-})
-
-function once (fn) {
-  var f = function () {
-    if (f.called) return f.value
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  f.called = false
-  return f
-}
-
-function onceStrict (fn) {
-  var f = function () {
-    if (f.called)
-      throw new Error(f.onceError)
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  var name = fn.name || 'Function wrapped with `once`'
-  f.onceError = name + " shouldn't be called more than once"
-  f.called = false
-  return f
-}
-
-},{"wrappy":58}],31:[function(require,module,exports){
-/**
- * @author Titus Wormer
- * @copyright 2015 Titus Wormer
- * @license MIT
- * @module parse-entities
- * @fileoverview Parse HTML character references: fast, spec-compliant,
- *   positional information.
- */
-
-'use strict';
-
-/* Dependencies. */
-var has = require('has');
-var characterEntities = require('character-entities');
-var legacy = require('character-entities-legacy');
-var invalid = require('character-reference-invalid');
-var decimal = require('is-decimal');
-var hexadecimal = require('is-hexadecimal');
-var alphanumerical = require('is-alphanumerical');
-
-/* Expose. */
-module.exports = wrapper;
-
-/* Methods. */
-var fromCharCode = String.fromCharCode;
-var noop = Function.prototype;
-
-/* Characters. */
-var REPLACEMENT = '\uFFFD';
-var FORM_FEED = '\f';
-var AMPERSAND = '&';
-var OCTOTHORP = '#';
-var SEMICOLON = ';';
-var NEWLINE = '\n';
-var X_LOWER = 'x';
-var X_UPPER = 'X';
-var SPACE = ' ';
-var LESS_THAN = '<';
-var EQUAL = '=';
-var EMPTY = '';
-var TAB = '\t';
-
-/* Default settings. */
-var defaults = {
-  warning: null,
-  reference: null,
-  text: null,
-  warningContext: null,
-  referenceContext: null,
-  textContext: null,
-  position: {},
-  additional: null,
-  attribute: false,
-  nonTerminated: true
-};
-
-/* Reference types. */
-var NAMED = 'named';
-var HEXADECIMAL = 'hexadecimal';
-var DECIMAL = 'decimal';
-
-/* Map of bases. */
-var BASE = {};
-
-BASE[HEXADECIMAL] = 16;
-BASE[DECIMAL] = 10;
-
-/* Map of types to tests. Each type of character reference
- * accepts different characters. This test is used to
- * detect whether a reference has ended (as the semicolon
- * is not strictly needed). */
-var TESTS = {};
-
-TESTS[NAMED] = alphanumerical;
-TESTS[DECIMAL] = decimal;
-TESTS[HEXADECIMAL] = hexadecimal;
-
-/* Warning messages. */
-var NAMED_NOT_TERMINATED = 1;
-var NUMERIC_NOT_TERMINATED = 2;
-var NAMED_EMPTY = 3;
-var NUMERIC_EMPTY = 4;
-var NAMED_UNKNOWN = 5;
-var NUMERIC_DISALLOWED = 6;
-var NUMERIC_PROHIBITED = 7;
-
-var NUMERIC_REFERENCE = 'Numeric character references';
-var NAMED_REFERENCE = 'Named character references';
-var TERMINATED = ' must be terminated by a semicolon';
-var VOID = ' cannot be empty';
-
-var MESSAGES = {};
-
-MESSAGES[NAMED_NOT_TERMINATED] = NAMED_REFERENCE + TERMINATED;
-MESSAGES[NUMERIC_NOT_TERMINATED] = NUMERIC_REFERENCE + TERMINATED;
-MESSAGES[NAMED_EMPTY] = NAMED_REFERENCE + VOID;
-MESSAGES[NUMERIC_EMPTY] = NUMERIC_REFERENCE + VOID;
-MESSAGES[NAMED_UNKNOWN] = NAMED_REFERENCE + ' must be known';
-MESSAGES[NUMERIC_DISALLOWED] = NUMERIC_REFERENCE + ' cannot be disallowed';
-MESSAGES[NUMERIC_PROHIBITED] = NUMERIC_REFERENCE + ' cannot be outside the ' +
-    'permissible Unicode range';
-
-/**
- * Wrap to ensure clean parameters are given to `parse`.
- *
- * @param {string} value - Value with entities.
- * @param {Object?} [options] - Configuration.
- */
-function wrapper(value, options) {
-  var settings = {};
-  var key;
-
-  if (!options) {
-    options = {};
-  }
-
-  for (key in defaults) {
-    settings[key] = options[key] == null ? defaults[key] : options[key];
-  }
-
-  if (settings.position.indent || settings.position.start) {
-    settings.indent = settings.position.indent || [];
-    settings.position = settings.position.start;
-  }
-
-  return parse(value, settings);
-}
-
-/**
- * Parse entities.
- *
- * @param {string} value - Value to tokenise.
- * @param {Object?} [settings] - Configuration.
- */
-function parse(value, settings) {
-  var additional = settings.additional;
-  var nonTerminated = settings.nonTerminated;
-  var handleText = settings.text;
-  var handleReference = settings.reference;
-  var handleWarning = settings.warning;
-  var textContext = settings.textContext;
-  var referenceContext = settings.referenceContext;
-  var warningContext = settings.warningContext;
-  var pos = settings.position;
-  var indent = settings.indent || [];
-  var length = value.length;
-  var index = 0;
-  var lines = -1;
-  var column = pos.column || 1;
-  var line = pos.line || 1;
-  var queue = EMPTY;
-  var result = [];
-  var entityCharacters;
-  var terminated;
-  var characters;
-  var character;
-  var reference;
-  var following;
-  var warning;
-  var reason;
-  var output;
-  var entity;
-  var begin;
-  var start;
-  var type;
-  var test;
-  var prev;
-  var next;
-  var diff;
-  var end;
-
-  /* Cache the current point. */
-  prev = now();
-
-  /* Wrap `handleWarning`. */
-  warning = handleWarning ? parseError : noop;
-
-  /* Ensure the algorithm walks over the first character
-   * and the end (inclusive). */
-  index--;
-  length++;
-
-  while (++index < length) {
-    /* If the previous character was a newline. */
-    if (character === NEWLINE) {
-      column = indent[lines] || 1;
-    }
-
-    character = at(index);
-
-    /* Handle anything other than an ampersand,
-     * including newlines and EOF. */
-    if (character !== AMPERSAND) {
-      if (character === NEWLINE) {
-        line++;
-        lines++;
-        column = 0;
-      }
-
-      if (character) {
-        queue += character;
-        column++;
-      } else {
-        flush();
-      }
-    } else {
-      following = at(index + 1);
-
-      /* The behaviour depends on the identity of the next
-       * character. */
-      if (
-        following === TAB ||
-        following === NEWLINE ||
-        following === FORM_FEED ||
-        following === SPACE ||
-        following === LESS_THAN ||
-        following === AMPERSAND ||
-        following === EMPTY ||
-        (additional && following === additional)
-      ) {
-        /* Not a character reference. No characters
-         * are consumed, and nothing is returned.
-         * This is not an error, either. */
-        queue += character;
-        column++;
-
-        continue;
-      }
-
-      start = begin = end = index + 1;
-
-      /* Numerical entity. */
-      if (following !== OCTOTHORP) {
-        type = NAMED;
-      } else {
-        end = ++begin;
-
-        /* The behaviour further depends on the
-         * character after the U+0023 NUMBER SIGN. */
-        following = at(end);
-
-        if (following === X_LOWER || following === X_UPPER) {
-          /* ASCII hex digits. */
-          type = HEXADECIMAL;
-          end = ++begin;
-        } else {
-          /* ASCII digits. */
-          type = DECIMAL;
-        }
-      }
-
-      entityCharacters = entity = characters = EMPTY;
-      test = TESTS[type];
-      end--;
-
-      while (++end < length) {
-        following = at(end);
-
-        if (!test(following)) {
-          break;
-        }
-
-        characters += following;
-
-        /* Check if we can match a legacy named
-         * reference.  If so, we cache that as the
-         * last viable named reference.  This
-         * ensures we do not need to walk backwards
-         * later. */
-        if (type === NAMED && has(legacy, characters)) {
-          entityCharacters = characters;
-          entity = legacy[characters];
-        }
-      }
-
-      terminated = at(end) === SEMICOLON;
-
-      if (terminated) {
-        end++;
-
-        if (type === NAMED && has(characterEntities, characters)) {
-          entityCharacters = characters;
-          entity = characterEntities[characters];
-        }
-      }
-
-      diff = 1 + end - start;
-
-      if (!terminated && !nonTerminated) {
-        /* Empty. */
-      } else if (!characters) {
-        /* An empty (possible) entity is valid, unless
-         * its numeric (thus an ampersand followed by
-         * an octothorp). */
-        if (type !== NAMED) {
-          warning(NUMERIC_EMPTY, diff);
-        }
-      } else if (type === NAMED) {
-        /* An ampersand followed by anything
-         * unknown, and not terminated, is invalid. */
-        if (terminated && !entity) {
-          warning(NAMED_UNKNOWN, 1);
-        } else {
-          /* If theres something after an entity
-           * name which is not known, cap the
-           * reference. */
-          if (entityCharacters !== characters) {
-            end = begin + entityCharacters.length;
-            diff = 1 + end - begin;
-            terminated = false;
-          }
-
-          /* If the reference is not terminated,
-           * warn. */
-          if (!terminated) {
-            reason = entityCharacters ?
-              NAMED_NOT_TERMINATED :
-              NAMED_EMPTY;
-
-            if (!settings.attribute) {
-              warning(reason, diff);
-            } else {
-              following = at(end);
-
-              if (following === EQUAL) {
-                warning(reason, diff);
-                entity = null;
-              } else if (alphanumerical(following)) {
-                entity = null;
-              } else {
-                warning(reason, diff);
-              }
-            }
-          }
-        }
-
-        reference = entity;
-      } else {
-        if (!terminated) {
-          /* All non-terminated numeric entities are
-           * not rendered, and trigger a warning. */
-          warning(NUMERIC_NOT_TERMINATED, diff);
-        }
-
-        /* When terminated and number, parse as
-         * either hexadecimal or decimal. */
-        reference = parseInt(characters, BASE[type]);
-
-        /* Trigger a warning when the parsed number
-         * is prohibited, and replace with
-         * replacement character. */
-        if (isProhibited(reference)) {
-          warning(NUMERIC_PROHIBITED, diff);
-
-          reference = REPLACEMENT;
-        } else if (reference in invalid) {
-          /* Trigger a warning when the parsed number
-           * is disallowed, and replace by an
-           * alternative. */
-          warning(NUMERIC_DISALLOWED, diff);
-
-          reference = invalid[reference];
-        } else {
-          /* Parse the number. */
-          output = EMPTY;
-
-          /* Trigger a warning when the parsed
-           * number should not be used. */
-          if (isWarning(reference)) {
-            warning(NUMERIC_DISALLOWED, diff);
-          }
-
-          /* Stringify the number. */
-          if (reference > 0xFFFF) {
-            reference -= 0x10000;
-            output += fromCharCode((reference >>> (10 & 0x3FF)) | 0xD800);
-            reference = 0xDC00 | (reference & 0x3FF);
-          }
-
-          reference = output + fromCharCode(reference);
-        }
-      }
-
-      /* If we could not find a reference, queue the
-       * checked characters (as normal characters),
-       * and move the pointer to their end. This is
-       * possible because we can be certain neither
-       * newlines nor ampersands are included. */
-      if (!reference) {
-        characters = value.slice(start - 1, end);
-        queue += characters;
-        column += characters.length;
-        index = end - 1;
-      } else {
-        /* Found it! First eat the queued
-         * characters as normal text, then eat
-         * an entity. */
-        flush();
-
-        prev = now();
-        index = end - 1;
-        column += end - start + 1;
-        result.push(reference);
-        next = now();
-        next.offset++;
-
-        if (handleReference) {
-          handleReference.call(referenceContext, reference, {
-            start: prev,
-            end: next
-          }, value.slice(start - 1, end));
-        }
-
-        prev = next;
-      }
-    }
-  }
-
-  /* Return the reduced nodes, and any possible warnings. */
-  return result.join(EMPTY);
-
-  /**
-   * Get current position.
-   *
-   * @return {Object} - Positional information of a
-   *   single point.
-   */
-  function now() {
-    return {
-      line: line,
-      column: column,
-      offset: index + (pos.offset || 0)
-    };
-  }
-
-  /**
-   * “Throw” a parse-error: a warning.
-   *
-   * @param {number} code - Identifier of reason for
-   *   failing.
-   * @param {number} offset - Offset in characters from
-   *   the current position point at which the
-   *   parse-error ocurred, cannot point past newlines.
-   */
-  function parseError(code, offset) {
-    var position = now();
-
-    position.column += offset;
-    position.offset += offset;
-
-    handleWarning.call(warningContext, MESSAGES[code], position, code);
-  }
-
-  /**
-   * Get character at position.
-   *
-   * @param {number} position - Indice of character in `value`.
-   * @return {string} - Character at `position` in
-   *   `value`.
-   */
-  function at(position) {
-    return value.charAt(position);
-  }
-
-  /**
-   * Flush `queue` (normal text). Macro invoked before
-   * each entity and at the end of `value`.
-   *
-   * Does nothing when `queue` is empty.
-   */
-  function flush() {
-    if (queue) {
-      result.push(queue);
-
-      if (handleText) {
-        handleText.call(textContext, queue, {
-          start: prev,
-          end: now()
-        });
-      }
-
-      queue = EMPTY;
-    }
-  }
-}
-
-/**
- * Check whether `character` is outside the permissible
- * unicode range.
- *
- * @param {number} code - Value.
- * @return {boolean} - Whether `character` is an
- *   outside the permissible unicode range.
- */
-function isProhibited(code) {
-  return (code >= 0xD800 && code <= 0xDFFF) || (code > 0x10FFFF);
-}
-
-/**
- * Check whether `character` is disallowed.
- *
- * @param {number} code - Value.
- * @return {boolean} - Whether `character` is disallowed.
- */
-function isWarning(code) {
-  if (
-    (code >= 0x0001 && code <= 0x0008) ||
-    code === 0x000B ||
-    (code >= 0x000D && code <= 0x001F) ||
-    (code >= 0x007F && code <= 0x009F) ||
-    (code >= 0xFDD0 && code <= 0xFDEF) ||
-    (code & 0xFFFF) === 0xFFFF ||
-    (code & 0xFFFF) === 0xFFFE
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-},{"character-entities":9,"character-entities-legacy":8,"character-reference-invalid":10,"has":18,"is-alphanumerical":21,"is-decimal":22,"is-hexadecimal":23}],32:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],33:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -5531,7 +4685,7 @@ parse.Parser = Parser;
 /* Expose */
 module.exports = parse;
 
-},{"./lib/parser.js":37,"unherit":52}],34:[function(require,module,exports){
+},{"./lib/parser.js":34,"unherit":55}],31:[function(require,module,exports){
 module.exports=[
     "article",
     "header",
@@ -5585,7 +4739,7 @@ module.exports=[
     "style"
 ]
 
-},{}],35:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -5608,7 +4762,7 @@ module.exports = {
     'breaks': false
 };
 
-},{}],36:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports={
   "default": [
     "\\",
@@ -5685,7 +4839,7 @@ module.exports={
   ]
 }
 
-},{}],37:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -12005,7 +11159,7 @@ Parser.prototype.tokenizeFactory = tokenizeFactory;
 
 module.exports = Parser;
 
-},{"./block-elements.json":34,"./defaults.js":35,"./escapes.json":36,"collapse-white-space":11,"extend":15,"parse-entities":31,"repeat-string":42,"trim":49,"trim-trailing-lines":48,"unist-util-remove-position":54,"vfile-location":56}],38:[function(require,module,exports){
+},{"./block-elements.json":31,"./defaults.js":32,"./escapes.json":33,"collapse-white-space":12,"extend":16,"parse-entities":43,"repeat-string":45,"trim":52,"trim-trailing-lines":51,"unist-util-remove-position":56,"vfile-location":58}],35:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -12037,7 +11191,7 @@ stringify.Compiler = Compiler;
 /* Expose. */
 module.exports = stringify;
 
-},{"./lib/compiler.js":39,"unherit":52}],39:[function(require,module,exports){
+},{"./lib/compiler.js":36,"unherit":55}],36:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -14668,7 +13822,7 @@ compilerPrototype.compile = function (node) {
 
 module.exports = Compiler;
 
-},{"./defaults.js":40,"ccount":6,"extend":15,"longest-streak":24,"markdown-table":25,"parse-entities":31,"repeat-string":42,"stringify-entities":44}],40:[function(require,module,exports){
+},{"./defaults.js":37,"ccount":7,"extend":16,"longest-streak":28,"markdown-table":29,"parse-entities":43,"repeat-string":45,"stringify-entities":47}],37:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -14702,7 +13856,7 @@ module.exports = {
     'emphasis': '_'
 };
 
-},{}],41:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015-2016 Titus Wormer
@@ -14723,1110 +13877,7 @@ var stringify = require('remark-stringify');
 /* Expose. */
 module.exports = unified().use(parse).use(stringify).abstract();
 
-},{"remark-parse":33,"remark-stringify":38,"unified":53}],42:[function(require,module,exports){
-/*!
- * repeat-string <https://github.com/jonschlinkert/repeat-string>
- *
- * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT License.
- */
-
-'use strict';
-
-/**
- * Results cache
- */
-
-var res = '';
-var cache;
-
-/**
- * Expose `repeat`
- */
-
-module.exports = repeat;
-
-/**
- * Repeat the given `string` the specified `number`
- * of times.
- *
- * **Example:**
- *
- * ```js
- * var repeat = require('repeat-string');
- * repeat('A', 5);
- * //=> AAAAA
- * ```
- *
- * @param {String} `string` The string to repeat
- * @param {Number} `number` The number of times to repeat the string
- * @return {String} Repeated string
- * @api public
- */
-
-function repeat(str, num) {
-  if (typeof str !== 'string') {
-    throw new TypeError('expected a string');
-  }
-
-  // cover common, quick use cases
-  if (num === 1) return str;
-  if (num === 2) return str + str;
-
-  var max = str.length * num;
-  if (cache !== str || typeof cache === 'undefined') {
-    cache = str;
-    res = '';
-  } else if (res.length >= max) {
-    return res.substr(0, max);
-  }
-
-  while (max > res.length && num > 1) {
-    if (num & 1) {
-      res += str;
-    }
-
-    num >>= 1;
-    str += str;
-  }
-
-  res += str;
-  res = res.substr(0, max);
-  return res;
-}
-
-},{}],43:[function(require,module,exports){
-module.exports=[
-  "cent",
-  "copy",
-  "divide",
-  "gt",
-  "lt",
-  "not",
-  "para",
-  "times"
-]
-
-},{}],44:[function(require,module,exports){
-'use strict';
-
-var entities = require('character-entities-html4');
-var legacy = require('character-entities-legacy');
-var has = require('has');
-var hexadecimal = require('is-hexadecimal');
-var alphanumerical = require('is-alphanumerical');
-var dangerous = require('./dangerous.json');
-
-/* Expose. */
-module.exports = encode;
-
-encode.escape = escape;
-
-/* List of enforced escapes. */
-var escapes = ['"', '\'', '<', '>', '&', '`'];
-
-/* Map of characters to names. */
-var characters = construct();
-
-/* Default escapes. */
-var EXPRESSION_ESCAPE = toExpression(escapes);
-
-/* Surrogate pairs. */
-var EXPRESSION_SURROGATE_PAIR = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
-
-/* Non-ASCII characters. */
-// eslint-disable-next-line no-control-regex
-var EXPRESSION_BMP = /[\x01-\t\x0B\f\x0E-\x1F\x7F\x81\x8D\x8F\x90\x9D\xA0-\uFFFF]/g;
-
-/* Encode special characters in `value`. */
-function encode(value, options) {
-  var settings = options || {};
-  var subset = settings.subset;
-  var set = subset ? toExpression(subset) : EXPRESSION_ESCAPE;
-  var escapeOnly = settings.escapeOnly;
-  var omit = settings.omitOptionalSemicolons;
-
-  value = value.replace(set, function (char, pos, val) {
-    return one(char, val.charAt(pos + 1), settings);
-  });
-
-  if (subset || escapeOnly) {
-    return value;
-  }
-
-  return value
-    .replace(EXPRESSION_SURROGATE_PAIR, function (pair, pos, val) {
-      return toHexReference(
-        ((pair.charCodeAt(0) - 0xD800) * 0x400) +
-        pair.charCodeAt(1) - 0xDC00 + 0x10000,
-        val.charAt(pos + 2),
-        omit
-      );
-    })
-    .replace(EXPRESSION_BMP, function (char, pos, val) {
-      return one(char, val.charAt(pos + 1), settings);
-    });
-}
-
-/* Shortcut to escape special characters in HTML. */
-function escape(value) {
-  return encode(value, {
-    escapeOnly: true,
-    useNamedReferences: true
-  });
-}
-
-/* Encode `char` according to `options`. */
-function one(char, next, options) {
-  var shortest = options.useShortestReferences;
-  var omit = options.omitOptionalSemicolons;
-  var named;
-  var numeric;
-
-  if (
-    (shortest || options.useNamedReferences) &&
-    has(characters, char)
-  ) {
-    named = toNamed(characters[char], next, omit, options.attribute);
-  }
-
-  if (shortest || !named) {
-    numeric = toHexReference(char.charCodeAt(0), next, omit);
-  }
-
-  if (named && (!shortest || named.length < numeric.length)) {
-    return named;
-  }
-
-  return numeric;
-}
-
-/* Transform `code` into an entity. */
-function toNamed(name, next, omit, attribute) {
-  var value = '&' + name;
-
-  if (
-    omit &&
-    has(legacy, name) &&
-    dangerous.indexOf(name) === -1 &&
-    (!attribute || (next && next !== '=' && !alphanumerical(next)))
-  ) {
-    return value;
-  }
-
-  return value + ';';
-}
-
-/* Transform `code` into a hexadecimal character reference. */
-function toHexReference(code, next, omit) {
-  var value = '&#x' + code.toString(16).toUpperCase();
-  return omit && next && !hexadecimal(next) ? value : value + ';';
-}
-
-/* Create an expression for `characters`. */
-function toExpression(characters) {
-  return new RegExp('[' + characters.join('') + ']', 'g');
-}
-
-/* Construct the map. */
-function construct() {
-  var chars = {};
-  var name;
-
-  for (name in entities) {
-    chars[entities[name]] = name;
-  }
-
-  return chars;
-}
-
-},{"./dangerous.json":43,"character-entities-html4":7,"character-entities-legacy":8,"has":18,"is-alphanumerical":21,"is-hexadecimal":23}],45:[function(require,module,exports){
-"use strict";
-
-var StructuredSource = require('./structured-source.js')["default"];
-
-
-module.exports = StructuredSource;
-
-/* vim: set sw=4 ts=4 et tw=80 : */
-
-},{"./structured-source.js":46}],46:[function(require,module,exports){
-"use strict";
-
-var _classProps = function (child, staticProps, instanceProps) {
-  if (staticProps) Object.defineProperties(child, staticProps);
-  if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
-};
-
-var upperBound = require('boundary').upperBound;
-var Position = function Position(line, column) {
-  this.line = line;
-  this.column = column;
-};
-
-exports.Position = Position;
-var SourceLocation = function SourceLocation(start, end) {
-  this.start = start;
-  this.end = end;
-};
-
-exports.SourceLocation = SourceLocation;
-var StructuredSource = (function () {
-  var StructuredSource =
-  /**
-   * @constructs StructuredSource
-   * @param {string} source - source code text.
-   */
-  function StructuredSource(source) {
-    this.indice = [0];
-    var regexp = /[\r\n\u2028\u2029]/g;
-    var length = source.length;
-    regexp.lastIndex = 0;
-    while (true) {
-      var result = regexp.exec(source);
-      if (!result) {
-        break;
-      }
-      var index = result.index;
-      if (source.charCodeAt(index) === 13 /* '\r' */ && source.charCodeAt(index + 1) === 10 /* '\n' */) {
-        index += 1;
-      }
-      var nextIndex = index + 1;
-      // If there's a last line terminator, we push it to the indice.
-      // So use < instead of <=.
-      if (length < nextIndex) {
-        break;
-      }
-      this.indice.push(nextIndex);
-      regexp.lastIndex = nextIndex;
-    }
-  };
-
-  StructuredSource.prototype.locationToRange = function (loc) {
-    return [this.positionToIndex(loc.start), this.positionToIndex(loc.end)];
-  };
-
-  StructuredSource.prototype.rangeToLocation = function (range) {
-    return new SourceLocation(this.indexToPosition(range[0]), this.indexToPosition(range[1]));
-  };
-
-  StructuredSource.prototype.positionToIndex = function (pos) {
-    // Line number starts with 1.
-    // Column number starts with 0.
-    var start = this.indice[pos.line - 1];
-    return start + pos.column;
-  };
-
-  StructuredSource.prototype.indexToPosition = function (index) {
-    var startLine = upperBound(this.indice, index);
-    return new Position(startLine, index - this.indice[startLine - 1]);
-  };
-
-  _classProps(StructuredSource, null, {
-    line: {
-      get: function () {
-        return this.indice.length;
-      }
-    }
-  });
-
-  return StructuredSource;
-})();
-
-exports["default"] = StructuredSource;
-
-},{"boundary":5}],47:[function(require,module,exports){
-var traverse = module.exports = function (obj) {
-    return new Traverse(obj);
-};
-
-function Traverse (obj) {
-    this.value = obj;
-}
-
-Traverse.prototype.get = function (ps) {
-    var node = this.value;
-    for (var i = 0; i < ps.length; i ++) {
-        var key = ps[i];
-        if (!node || !hasOwnProperty.call(node, key)) {
-            node = undefined;
-            break;
-        }
-        node = node[key];
-    }
-    return node;
-};
-
-Traverse.prototype.has = function (ps) {
-    var node = this.value;
-    for (var i = 0; i < ps.length; i ++) {
-        var key = ps[i];
-        if (!node || !hasOwnProperty.call(node, key)) {
-            return false;
-        }
-        node = node[key];
-    }
-    return true;
-};
-
-Traverse.prototype.set = function (ps, value) {
-    var node = this.value;
-    for (var i = 0; i < ps.length - 1; i ++) {
-        var key = ps[i];
-        if (!hasOwnProperty.call(node, key)) node[key] = {};
-        node = node[key];
-    }
-    node[ps[i]] = value;
-    return value;
-};
-
-Traverse.prototype.map = function (cb) {
-    return walk(this.value, cb, true);
-};
-
-Traverse.prototype.forEach = function (cb) {
-    this.value = walk(this.value, cb, false);
-    return this.value;
-};
-
-Traverse.prototype.reduce = function (cb, init) {
-    var skip = arguments.length === 1;
-    var acc = skip ? this.value : init;
-    this.forEach(function (x) {
-        if (!this.isRoot || !skip) {
-            acc = cb.call(this, acc, x);
-        }
-    });
-    return acc;
-};
-
-Traverse.prototype.paths = function () {
-    var acc = [];
-    this.forEach(function (x) {
-        acc.push(this.path); 
-    });
-    return acc;
-};
-
-Traverse.prototype.nodes = function () {
-    var acc = [];
-    this.forEach(function (x) {
-        acc.push(this.node);
-    });
-    return acc;
-};
-
-Traverse.prototype.clone = function () {
-    var parents = [], nodes = [];
-    
-    return (function clone (src) {
-        for (var i = 0; i < parents.length; i++) {
-            if (parents[i] === src) {
-                return nodes[i];
-            }
-        }
-        
-        if (typeof src === 'object' && src !== null) {
-            var dst = copy(src);
-            
-            parents.push(src);
-            nodes.push(dst);
-            
-            forEach(objectKeys(src), function (key) {
-                dst[key] = clone(src[key]);
-            });
-            
-            parents.pop();
-            nodes.pop();
-            return dst;
-        }
-        else {
-            return src;
-        }
-    })(this.value);
-};
-
-function walk (root, cb, immutable) {
-    var path = [];
-    var parents = [];
-    var alive = true;
-    
-    return (function walker (node_) {
-        var node = immutable ? copy(node_) : node_;
-        var modifiers = {};
-        
-        var keepGoing = true;
-        
-        var state = {
-            node : node,
-            node_ : node_,
-            path : [].concat(path),
-            parent : parents[parents.length - 1],
-            parents : parents,
-            key : path.slice(-1)[0],
-            isRoot : path.length === 0,
-            level : path.length,
-            circular : null,
-            update : function (x, stopHere) {
-                if (!state.isRoot) {
-                    state.parent.node[state.key] = x;
-                }
-                state.node = x;
-                if (stopHere) keepGoing = false;
-            },
-            'delete' : function (stopHere) {
-                delete state.parent.node[state.key];
-                if (stopHere) keepGoing = false;
-            },
-            remove : function (stopHere) {
-                if (isArray(state.parent.node)) {
-                    state.parent.node.splice(state.key, 1);
-                }
-                else {
-                    delete state.parent.node[state.key];
-                }
-                if (stopHere) keepGoing = false;
-            },
-            keys : null,
-            before : function (f) { modifiers.before = f },
-            after : function (f) { modifiers.after = f },
-            pre : function (f) { modifiers.pre = f },
-            post : function (f) { modifiers.post = f },
-            stop : function () { alive = false },
-            block : function () { keepGoing = false }
-        };
-        
-        if (!alive) return state;
-        
-        function updateState() {
-            if (typeof state.node === 'object' && state.node !== null) {
-                if (!state.keys || state.node_ !== state.node) {
-                    state.keys = objectKeys(state.node)
-                }
-                
-                state.isLeaf = state.keys.length == 0;
-                
-                for (var i = 0; i < parents.length; i++) {
-                    if (parents[i].node_ === node_) {
-                        state.circular = parents[i];
-                        break;
-                    }
-                }
-            }
-            else {
-                state.isLeaf = true;
-                state.keys = null;
-            }
-            
-            state.notLeaf = !state.isLeaf;
-            state.notRoot = !state.isRoot;
-        }
-        
-        updateState();
-        
-        // use return values to update if defined
-        var ret = cb.call(state, state.node);
-        if (ret !== undefined && state.update) state.update(ret);
-        
-        if (modifiers.before) modifiers.before.call(state, state.node);
-        
-        if (!keepGoing) return state;
-        
-        if (typeof state.node == 'object'
-        && state.node !== null && !state.circular) {
-            parents.push(state);
-            
-            updateState();
-            
-            forEach(state.keys, function (key, i) {
-                path.push(key);
-                
-                if (modifiers.pre) modifiers.pre.call(state, state.node[key], key);
-                
-                var child = walker(state.node[key]);
-                if (immutable && hasOwnProperty.call(state.node, key)) {
-                    state.node[key] = child.node;
-                }
-                
-                child.isLast = i == state.keys.length - 1;
-                child.isFirst = i == 0;
-                
-                if (modifiers.post) modifiers.post.call(state, child);
-                
-                path.pop();
-            });
-            parents.pop();
-        }
-        
-        if (modifiers.after) modifiers.after.call(state, state.node);
-        
-        return state;
-    })(root).node;
-}
-
-function copy (src) {
-    if (typeof src === 'object' && src !== null) {
-        var dst;
-        
-        if (isArray(src)) {
-            dst = [];
-        }
-        else if (isDate(src)) {
-            dst = new Date(src.getTime ? src.getTime() : src);
-        }
-        else if (isRegExp(src)) {
-            dst = new RegExp(src);
-        }
-        else if (isError(src)) {
-            dst = { message: src.message };
-        }
-        else if (isBoolean(src)) {
-            dst = new Boolean(src);
-        }
-        else if (isNumber(src)) {
-            dst = new Number(src);
-        }
-        else if (isString(src)) {
-            dst = new String(src);
-        }
-        else if (Object.create && Object.getPrototypeOf) {
-            dst = Object.create(Object.getPrototypeOf(src));
-        }
-        else if (src.constructor === Object) {
-            dst = {};
-        }
-        else {
-            var proto =
-                (src.constructor && src.constructor.prototype)
-                || src.__proto__
-                || {}
-            ;
-            var T = function () {};
-            T.prototype = proto;
-            dst = new T;
-        }
-        
-        forEach(objectKeys(src), function (key) {
-            dst[key] = src[key];
-        });
-        return dst;
-    }
-    else return src;
-}
-
-var objectKeys = Object.keys || function keys (obj) {
-    var res = [];
-    for (var key in obj) res.push(key)
-    return res;
-};
-
-function toS (obj) { return Object.prototype.toString.call(obj) }
-function isDate (obj) { return toS(obj) === '[object Date]' }
-function isRegExp (obj) { return toS(obj) === '[object RegExp]' }
-function isError (obj) { return toS(obj) === '[object Error]' }
-function isBoolean (obj) { return toS(obj) === '[object Boolean]' }
-function isNumber (obj) { return toS(obj) === '[object Number]' }
-function isString (obj) { return toS(obj) === '[object String]' }
-
-var isArray = Array.isArray || function isArray (xs) {
-    return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-var forEach = function (xs, fn) {
-    if (xs.forEach) return xs.forEach(fn)
-    else for (var i = 0; i < xs.length; i++) {
-        fn(xs[i], i, xs);
-    }
-};
-
-forEach(objectKeys(Traverse.prototype), function (key) {
-    traverse[key] = function (obj) {
-        var args = [].slice.call(arguments, 1);
-        var t = new Traverse(obj);
-        return t[key].apply(t, args);
-    };
-});
-
-var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
-    return key in obj;
-};
-
-},{}],48:[function(require,module,exports){
-'use strict';
-
-module.exports = trimTrailingLines;
-
-var line = '\n';
-
-/* Remove final newline characters from `value`. */
-function trimTrailingLines(value) {
-  var val = String(value);
-  var index = val.length;
-
-  while (val.charAt(--index) === line) { /* empty */ }
-
-  return val.slice(0, index + 1);
-}
-
-},{}],49:[function(require,module,exports){
-
-exports = module.exports = trim;
-
-function trim(str){
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  return str.replace(/^\s*/, '');
-};
-
-exports.right = function(str){
-  return str.replace(/\s*$/, '');
-};
-
-},{}],50:[function(require,module,exports){
-/**
- * @author Titus Wormer
- * @copyright 2016 Titus Wormer
- * @license MIT
- * @module trough
- * @fileoverview Middleware.  Inspired by `segmentio/ware`,
- *   but able to change the values from transformer to
- *   transformer.
- */
-
-'use strict';
-
-/* Expose. */
-module.exports = trough;
-
-/* Methods. */
-var slice = [].slice;
-
-/**
- * Create new middleware.
- *
- * @return {Object} - Middlewre.
- */
-function trough() {
-  var fns = [];
-  var middleware = {};
-
-  middleware.run = run;
-  middleware.use = use;
-
-  return middleware;
-
-  /**
-   * Run `fns`.  Last argument must be
-   * a completion handler.
-   *
-   * @param {...*} input - Parameters
-   */
-  function run() {
-    var index = -1;
-    var input = slice.call(arguments, 0, -1);
-    var done = arguments[arguments.length - 1];
-
-    if (typeof done !== 'function') {
-      throw new Error('Expected function as last argument, not ' + done);
-    }
-
-    next.apply(null, [null].concat(input));
-
-    return;
-
-    /**
-     * Run the next `fn`, if any.
-     *
-     * @param {Error?} err - Failure.
-     * @param {...*} values - Other input.
-     */
-    function next(err) {
-      var fn = fns[++index];
-      var params = slice.call(arguments, 0);
-      var values = params.slice(1);
-      var length = input.length;
-      var pos = -1;
-
-      if (err) {
-        done(err);
-        return;
-      }
-
-      /* Copy non-nully input into values. */
-      while (++pos < length) {
-        if (values[pos] === null || values[pos] === undefined) {
-          values[pos] = input[pos];
-        }
-      }
-
-      input = values;
-
-      /* Next or done. */
-      if (fn) {
-        wrap(fn, next).apply(null, input);
-      } else {
-        done.apply(null, [null].concat(input));
-      }
-    }
-  }
-
-  /**
-   * Add `fn` to the list.
-   *
-   * @param {Function} fn - Anything `wrap` accepts.
-   */
-  function use(fn) {
-    if (typeof fn !== 'function') {
-      throw new Error('Expected `fn` to be a function, not ' + fn);
-    }
-
-    fns.push(fn);
-
-    return middleware;
-  }
-}
-
-/**
- * Wrap `fn`.  Can be sync or async; return a promise,
- * receive a completion handler, return new values and
- * errors.
- *
- * @param {Function} fn - Thing to wrap.
- * @param {Function} next - Completion handler.
- * @return {Function} - Wrapped `fn`.
- */
-function wrap(fn, next) {
-  var invoked;
-
-  return wrapped;
-
-  function wrapped() {
-    var params = slice.call(arguments, 0);
-    var callback = fn.length > params.length;
-    var result;
-
-    if (callback) {
-      params.push(done);
-    }
-
-    try {
-      result = fn.apply(null, params);
-    } catch (err) {
-      /* Well, this is quite the pickle.  `fn` received
-       * a callback and invoked it (thus continuing the
-       * pipeline), but later also threw an error.
-       * We’re not about to restart the pipeline again,
-       * so the only thing left to do is to throw the
-       * thing instea. */
-      if (callback && invoked) {
-        throw err;
-      }
-
-      return done(err);
-    }
-
-    if (!callback) {
-      if (result && typeof result.then === 'function') {
-        result.then(then, done);
-      } else if (result instanceof Error) {
-        done(result);
-      } else {
-        then(result);
-      }
-    }
-  }
-
-  /**
-   * Invoke `next`, only once.
-   *
-   * @param {Error?} err - Optional error.
-   */
-  function done() {
-    if (!invoked) {
-      invoked = true;
-
-      next.apply(null, arguments);
-    }
-  }
-
-  /**
-   * Invoke `done` with one value.
-   * Tracks if an error is passed, too.
-   *
-   * @param {*} value - Optional value.
-   */
-  function then(value) {
-    done(null, value);
-  }
-}
-
-},{}],51:[function(require,module,exports){
-// LICENSE : MIT
-"use strict";
-var _prototypeProperties = function (child, staticProps, instanceProps) {
-  if (staticProps) Object.defineProperties(child, staticProps);
-  if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
-};
-
-function isNode(node) {
-  if (node == null) {
-    return false;
-  }
-  return typeof node === "object" && (typeof node.type === "string" || typeof node.t === "string");
-}
-function TxtElement(node, path, wrap, ref) {
-  this.node = node;
-  this.path = path;
-  this.wrap = wrap;
-  this.ref = ref;
-}
-
-var BREAK = {},
-    SKIP = {},
-    REMOVE = {};
-var VisitorOption = {
-  Break: BREAK,
-  Skip: SKIP,
-  Remove: REMOVE
-};
-var Controller = (function () {
-  function Controller() {}
-
-  _prototypeProperties(Controller, null, {
-    __willStartTraverse: {
-      value: function WillStartTraverse(root, visitor) {
-        this.__current = null;
-        this.visitor = visitor;
-        this.root = root;
-        this.__worklist = [];
-        this.__leavelist = [];
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    },
-    __execute: {
-      value: function Execute(callback, element) {
-        var previous, result;
-
-        result = undefined;
-
-        previous = this.__current;
-        this.__current = element;
-        if (callback) {
-          result = callback.call(this, element.node, this.__leavelist[this.__leavelist.length - 1].node);
-        }
-        this.__current = previous;
-
-        return result;
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    },
-    parents: {
-
-      /**
-       * Gets parent nodes of current node.
-       * The parent nodes are returned in order from the closest parent to the outer ones.
-       * Current node is {@link current}.
-       * @returns {Array}
-       * @public
-       */
-      value: function parents() {
-        var i, iz, result;
-        // first node is sentinel
-        result = [];
-        for (i = 1, iz = this.__leavelist.length; i < iz; ++i) {
-          result.push(this.__leavelist[i].node);
-        }
-        return result;
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    },
-    current: {
-
-      /**
-       * Gets current node during traverse.
-       * @returns {TxtNode}
-       * @public
-       */
-      value: function current() {
-        return this.__current.node;
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    },
-    traverse: {
-      value: function traverse(root, visitor) {
-        this.__willStartTraverse(root, visitor);
-
-        var sentinel = {};
-
-        // reference
-        var worklist = this.__worklist;
-        var leavelist = this.__leavelist;
-
-        // initialize
-        worklist.push(new TxtElement(root, null, null, null));
-        leavelist.push(new TxtElement(null, null, null, null));
-
-        while (worklist.length) {
-          var element = worklist.pop();
-
-          if (element === sentinel) {
-            element = leavelist.pop();
-
-            var ret = this.__execute(visitor.leave, element);
-
-            if (ret === BREAK) {
-              return;
-            }
-            continue;
-          }
-
-          if (element.node) {
-            ret = this.__execute(visitor.enter, element);
-
-            if (ret === BREAK) {
-              return;
-            }
-
-            worklist.push(sentinel);
-            leavelist.push(element);
-
-            if (ret === SKIP) {
-              continue;
-            }
-
-            var node = element.node;
-            var nodeType = element.wrap || node.type;
-            var candidates = Object.keys(node);
-
-            var current = candidates.length;
-            while ((current -= 1) >= 0) {
-              var key = candidates[current];
-              var candidate = node[key];
-              if (!candidate) {
-                continue;
-              }
-
-              if (Array.isArray(candidate)) {
-                var current2 = candidate.length;
-                while ((current2 -= 1) >= 0) {
-                  if (!candidate[current2]) {
-                    continue;
-                  }
-                  if (isNode(candidate[current2])) {
-                    element = new TxtElement(candidate[current2], [key, current2], null, null);
-                  } else {
-                    continue;
-                  }
-                  worklist.push(element);
-                }
-              } else if (isNode(candidate)) {
-                worklist.push(new TxtElement(candidate, key, null, null));
-              }
-            }
-          }
-        }
-      },
-      writable: true,
-      enumerable: true,
-      configurable: true
-    }
-  });
-
-  return Controller;
-})();
-
-
-
-
-function traverse(root, visitor) {
-  var controller = new Controller();
-  return controller.traverse(root, visitor);
-}
-exports.Controller = Controller;
-exports.traverse = traverse;
-exports.VisitorOption = VisitorOption;
-
-
-},{}],52:[function(require,module,exports){
-/**
- * @author Titus Wormer
- * @copyright 2015 Titus Wormer
- * @license MIT
- * @module unherit
- * @fileoverview Create a custom constructor which can be modified
- *   without affecting the original class.
- */
-
-'use strict';
-
-/* Dependencies. */
-var xtend = require('xtend');
-var inherits = require('inherits');
-
-/* Expose. */
-module.exports = unherit;
-
-/**
- * Create a custom constructor which can be modified
- * without affecting the original class.
- *
- * @param {Function} Super - Super-class.
- * @return {Function} - Constructor acting like `Super`,
- *   which can be modified without affecting the original
- *   class.
- */
-function unherit(Super) {
-  var result;
-  var key;
-  var value;
-
-  inherits(Of, Super);
-  inherits(From, Of);
-
-  /* Clone values. */
-  result = Of.prototype;
-
-  for (key in result) {
-    value = result[key];
-
-    if (value && typeof value === 'object') {
-      result[key] = 'concat' in value ? value.concat() : xtend(value);
-    }
-  }
-
-  return Of;
-
-  /**
-   * Constructor accepting a single argument,
-   * which itself is an `arguments` object.
-   */
-  function From(parameters) {
-    return Super.apply(this, parameters);
-  }
-
-  /**
-   * Constructor accepting variadic arguments.
-   */
-  function Of() {
-    if (!(this instanceof Of)) {
-      return new From(arguments);
-    }
-
-    return Super.apply(this, arguments);
-  }
-}
-
-},{"inherits":19,"xtend":59}],53:[function(require,module,exports){
+},{"remark-parse":30,"remark-stringify":35,"unified":39}],39:[function(require,module,exports){
 (function (global){
 /**
  * @author Titus Wormer
@@ -16467,233 +14518,7 @@ function isParser(parser) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"bail":4,"events":14,"extend":15,"has":18,"once":30,"trough":50,"vfile":57}],54:[function(require,module,exports){
-/**
- * @author Titus Wormer
- * @copyright 2016 Titus Wormer
- * @license MIT
- * @module unist:util:remove-position
- * @fileoverview Remove `position`s from a unist tree.
- */
-
-'use strict';
-
-/* eslint-env commonjs */
-
-/* Dependencies. */
-var visit = require('unist-util-visit');
-
-/* Expose. */
-module.exports = removePosition;
-
-/**
- * Remove `position`s from `tree`.
- *
- * @param {Node} tree - Node.
- * @return {Node} - Node without `position`s.
- */
-function removePosition(node, force) {
-  visit(node, force ? hard : soft);
-  return node;
-}
-
-/**
- * Delete `position`.
- */
-function hard(node) {
-  delete node.position;
-}
-
-/**
- * Remove `position` softly.
- */
-function soft(node) {
-  node.position = undefined;
-}
-
-},{"unist-util-visit":55}],55:[function(require,module,exports){
-'use strict';
-
-/* Expose. */
-module.exports = visit;
-
-/* Visit. */
-function visit(tree, type, visitor, reverse) {
-  if (typeof type === 'function') {
-    reverse = visitor;
-    visitor = type;
-    type = null;
-  }
-
-  one(tree);
-
-  return;
-
-  /* Visit a single node. */
-  function one(node, index, parent) {
-    var result;
-
-    index = index || (parent ? 0 : null);
-
-    if (!type || node.type === type) {
-      result = visitor(node, index, parent || null);
-    }
-
-    if (node.children && result !== false) {
-      return all(node.children, node);
-    }
-
-    return result;
-  }
-
-  /* Visit children in `parent`. */
-  function all(children, parent) {
-    var step = reverse ? -1 : 1;
-    var max = children.length;
-    var min = -1;
-    var index = (reverse ? max : min) + step;
-    var child;
-
-    while (index > min && index < max) {
-      child = children[index];
-
-      if (child && one(child, index, parent) === false) {
-        return false;
-      }
-
-      index += step;
-    }
-
-    return true;
-  }
-}
-
-},{}],56:[function(require,module,exports){
-/**
- * @author Titus Wormer
- * @copyright 2016 Titus Wormer
- * @license MIT
- * @module vfile-location
- * @fileoverview Convert between positions (line and column-based)
- *   and offsets (range-based) locations in a virtual file.
- */
-
-'use strict';
-
-/* Expose. */
-module.exports = factory;
-
-/**
- * Factory.
- *
- * @param {VFile|string|Buffer} file - Virtual file or document.
- */
-function factory(file) {
-  var contents = indices(String(file));
-
-  return {
-    toPosition: offsetToPositionFactory(contents),
-    toOffset: positionToOffsetFactory(contents)
-  };
-}
-
-/**
- * Factory to get the line and column-based `position` for
- * `offset` in the bound indices.
- *
- * @param {Array.<number>} indices - Indices of
- *   line-breaks in `value`.
- * @return {Function} - Bound method.
- */
-function offsetToPositionFactory(indices) {
-  return offsetToPosition;
-
-  /**
-   * Get the line and column-based `position` for
-   * `offset` in the bound indices.
-   *
-   * @param {number} offset - Offset.
-   * @return {Position} - Object with `line`, `column`,
-   *   and `offset` properties based on the bound
-   *   `indices`.  An empty object when given invalid
-   *   or out of bounds input.
-   */
-  function offsetToPosition(offset) {
-    var index = -1;
-    var length = indices.length;
-
-    if (offset < 0) {
-      return {};
-    }
-
-    while (++index < length) {
-      if (indices[index] > offset) {
-        return {
-          line: index + 1,
-          column: (offset - (indices[index - 1] || 0)) + 1,
-          offset: offset
-        };
-      }
-    }
-
-    return {};
-  }
-}
-
-/**
- * Factory to get the `offset` for a line and column-based
- * `position` in the bound indices.
- *
- * @param {Array.<number>} indices - Indices of
- *   line-breaks in `value`.
- * @return {Function} - Bound method.
- */
-function positionToOffsetFactory(indices) {
-  return positionToOffset;
-
-  /**
-   * Get the `offset` for a line and column-based
-   * `position` in the bound indices.
-   *
-   * @param {Position} position - Object with `line` and
-   *   `column` properties.
-   * @return {number} - Offset. `-1` when given invalid
-   *   or out of bounds input.
-   */
-  function positionToOffset(position) {
-    var line = position && position.line;
-    var column = position && position.column;
-
-    if (!isNaN(line) && !isNaN(column) && line - 1 in indices) {
-      return ((indices[line - 2] || 0) + column - 1) || 0;
-    }
-
-    return -1;
-  }
-}
-
-/**
- * Get indices of line-breaks in `value`.
- *
- * @param {string} value - Value.
- * @return {Array.<number>} - List of indices of
- *   line-breaks.
- */
-function indices(value) {
-  var result = [];
-  var index = value.indexOf('\n');
-
-  while (index !== -1) {
-    result.push(index + 1);
-    index = value.indexOf('\n', index + 1);
-  }
-
-  result.push(value.length + 1);
-
-  return result;
-}
-
-},{}],57:[function(require,module,exports){
+},{"bail":5,"events":15,"extend":16,"has":19,"once":42,"trough":53,"vfile":40}],40:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -17323,7 +15148,2242 @@ proto.namespace = namespace;
 
 module.exports = VFile;
 
+},{}],41:[function(require,module,exports){
+/**
+ * Helpers.
+ */
+
+var s = 1000
+var m = s * 60
+var h = m * 60
+var d = h * 24
+var y = d * 365.25
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function (val, options) {
+  options = options || {}
+  var type = typeof val
+  if (type === 'string' && val.length > 0) {
+    return parse(val)
+  } else if (type === 'number' && isNaN(val) === false) {
+    return options.long ?
+			fmtLong(val) :
+			fmtShort(val)
+  }
+  throw new Error('val is not a non-empty string or a valid number. val=' + JSON.stringify(val))
+}
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = String(str)
+  if (str.length > 10000) {
+    return
+  }
+  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str)
+  if (!match) {
+    return
+  }
+  var n = parseFloat(match[1])
+  var type = (match[2] || 'ms').toLowerCase()
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtShort(ms) {
+  if (ms >= d) {
+    return Math.round(ms / d) + 'd'
+  }
+  if (ms >= h) {
+    return Math.round(ms / h) + 'h'
+  }
+  if (ms >= m) {
+    return Math.round(ms / m) + 'm'
+  }
+  if (ms >= s) {
+    return Math.round(ms / s) + 's'
+  }
+  return ms + 'ms'
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  return plural(ms, d, 'day') ||
+    plural(ms, h, 'hour') ||
+    plural(ms, m, 'minute') ||
+    plural(ms, s, 'second') ||
+    ms + ' ms'
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, n, name) {
+  if (ms < n) {
+    return
+  }
+  if (ms < n * 1.5) {
+    return Math.floor(ms / n) + ' ' + name
+  }
+  return Math.ceil(ms / n) + ' ' + name + 's'
+}
+
+},{}],42:[function(require,module,exports){
+var wrappy = require('wrappy')
+module.exports = wrappy(once)
+module.exports.strict = wrappy(onceStrict)
+
+once.proto = once(function () {
+  Object.defineProperty(Function.prototype, 'once', {
+    value: function () {
+      return once(this)
+    },
+    configurable: true
+  })
+
+  Object.defineProperty(Function.prototype, 'onceStrict', {
+    value: function () {
+      return onceStrict(this)
+    },
+    configurable: true
+  })
+})
+
+function once (fn) {
+  var f = function () {
+    if (f.called) return f.value
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  f.called = false
+  return f
+}
+
+function onceStrict (fn) {
+  var f = function () {
+    if (f.called)
+      throw new Error(f.onceError)
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  var name = fn.name || 'Function wrapped with `once`'
+  f.onceError = name + " shouldn't be called more than once"
+  f.called = false
+  return f
+}
+
+},{"wrappy":61}],43:[function(require,module,exports){
+/**
+ * @author Titus Wormer
+ * @copyright 2015 Titus Wormer
+ * @license MIT
+ * @module parse-entities
+ * @fileoverview Parse HTML character references: fast, spec-compliant,
+ *   positional information.
+ */
+
+'use strict';
+
+/* Dependencies. */
+var has = require('has');
+var characterEntities = require('character-entities');
+var legacy = require('character-entities-legacy');
+var invalid = require('character-reference-invalid');
+var decimal = require('is-decimal');
+var hexadecimal = require('is-hexadecimal');
+var alphanumerical = require('is-alphanumerical');
+
+/* Expose. */
+module.exports = wrapper;
+
+/* Methods. */
+var fromCharCode = String.fromCharCode;
+var noop = Function.prototype;
+
+/* Characters. */
+var REPLACEMENT = '\uFFFD';
+var FORM_FEED = '\f';
+var AMPERSAND = '&';
+var OCTOTHORP = '#';
+var SEMICOLON = ';';
+var NEWLINE = '\n';
+var X_LOWER = 'x';
+var X_UPPER = 'X';
+var SPACE = ' ';
+var LESS_THAN = '<';
+var EQUAL = '=';
+var EMPTY = '';
+var TAB = '\t';
+
+/* Default settings. */
+var defaults = {
+  warning: null,
+  reference: null,
+  text: null,
+  warningContext: null,
+  referenceContext: null,
+  textContext: null,
+  position: {},
+  additional: null,
+  attribute: false,
+  nonTerminated: true
+};
+
+/* Reference types. */
+var NAMED = 'named';
+var HEXADECIMAL = 'hexadecimal';
+var DECIMAL = 'decimal';
+
+/* Map of bases. */
+var BASE = {};
+
+BASE[HEXADECIMAL] = 16;
+BASE[DECIMAL] = 10;
+
+/* Map of types to tests. Each type of character reference
+ * accepts different characters. This test is used to
+ * detect whether a reference has ended (as the semicolon
+ * is not strictly needed). */
+var TESTS = {};
+
+TESTS[NAMED] = alphanumerical;
+TESTS[DECIMAL] = decimal;
+TESTS[HEXADECIMAL] = hexadecimal;
+
+/* Warning messages. */
+var NAMED_NOT_TERMINATED = 1;
+var NUMERIC_NOT_TERMINATED = 2;
+var NAMED_EMPTY = 3;
+var NUMERIC_EMPTY = 4;
+var NAMED_UNKNOWN = 5;
+var NUMERIC_DISALLOWED = 6;
+var NUMERIC_PROHIBITED = 7;
+
+var NUMERIC_REFERENCE = 'Numeric character references';
+var NAMED_REFERENCE = 'Named character references';
+var TERMINATED = ' must be terminated by a semicolon';
+var VOID = ' cannot be empty';
+
+var MESSAGES = {};
+
+MESSAGES[NAMED_NOT_TERMINATED] = NAMED_REFERENCE + TERMINATED;
+MESSAGES[NUMERIC_NOT_TERMINATED] = NUMERIC_REFERENCE + TERMINATED;
+MESSAGES[NAMED_EMPTY] = NAMED_REFERENCE + VOID;
+MESSAGES[NUMERIC_EMPTY] = NUMERIC_REFERENCE + VOID;
+MESSAGES[NAMED_UNKNOWN] = NAMED_REFERENCE + ' must be known';
+MESSAGES[NUMERIC_DISALLOWED] = NUMERIC_REFERENCE + ' cannot be disallowed';
+MESSAGES[NUMERIC_PROHIBITED] = NUMERIC_REFERENCE + ' cannot be outside the ' +
+    'permissible Unicode range';
+
+/**
+ * Wrap to ensure clean parameters are given to `parse`.
+ *
+ * @param {string} value - Value with entities.
+ * @param {Object?} [options] - Configuration.
+ */
+function wrapper(value, options) {
+  var settings = {};
+  var key;
+
+  if (!options) {
+    options = {};
+  }
+
+  for (key in defaults) {
+    settings[key] = options[key] == null ? defaults[key] : options[key];
+  }
+
+  if (settings.position.indent || settings.position.start) {
+    settings.indent = settings.position.indent || [];
+    settings.position = settings.position.start;
+  }
+
+  return parse(value, settings);
+}
+
+/**
+ * Parse entities.
+ *
+ * @param {string} value - Value to tokenise.
+ * @param {Object?} [settings] - Configuration.
+ */
+function parse(value, settings) {
+  var additional = settings.additional;
+  var nonTerminated = settings.nonTerminated;
+  var handleText = settings.text;
+  var handleReference = settings.reference;
+  var handleWarning = settings.warning;
+  var textContext = settings.textContext;
+  var referenceContext = settings.referenceContext;
+  var warningContext = settings.warningContext;
+  var pos = settings.position;
+  var indent = settings.indent || [];
+  var length = value.length;
+  var index = 0;
+  var lines = -1;
+  var column = pos.column || 1;
+  var line = pos.line || 1;
+  var queue = EMPTY;
+  var result = [];
+  var entityCharacters;
+  var terminated;
+  var characters;
+  var character;
+  var reference;
+  var following;
+  var warning;
+  var reason;
+  var output;
+  var entity;
+  var begin;
+  var start;
+  var type;
+  var test;
+  var prev;
+  var next;
+  var diff;
+  var end;
+
+  /* Cache the current point. */
+  prev = now();
+
+  /* Wrap `handleWarning`. */
+  warning = handleWarning ? parseError : noop;
+
+  /* Ensure the algorithm walks over the first character
+   * and the end (inclusive). */
+  index--;
+  length++;
+
+  while (++index < length) {
+    /* If the previous character was a newline. */
+    if (character === NEWLINE) {
+      column = indent[lines] || 1;
+    }
+
+    character = at(index);
+
+    /* Handle anything other than an ampersand,
+     * including newlines and EOF. */
+    if (character !== AMPERSAND) {
+      if (character === NEWLINE) {
+        line++;
+        lines++;
+        column = 0;
+      }
+
+      if (character) {
+        queue += character;
+        column++;
+      } else {
+        flush();
+      }
+    } else {
+      following = at(index + 1);
+
+      /* The behaviour depends on the identity of the next
+       * character. */
+      if (
+        following === TAB ||
+        following === NEWLINE ||
+        following === FORM_FEED ||
+        following === SPACE ||
+        following === LESS_THAN ||
+        following === AMPERSAND ||
+        following === EMPTY ||
+        (additional && following === additional)
+      ) {
+        /* Not a character reference. No characters
+         * are consumed, and nothing is returned.
+         * This is not an error, either. */
+        queue += character;
+        column++;
+
+        continue;
+      }
+
+      start = begin = end = index + 1;
+
+      /* Numerical entity. */
+      if (following !== OCTOTHORP) {
+        type = NAMED;
+      } else {
+        end = ++begin;
+
+        /* The behaviour further depends on the
+         * character after the U+0023 NUMBER SIGN. */
+        following = at(end);
+
+        if (following === X_LOWER || following === X_UPPER) {
+          /* ASCII hex digits. */
+          type = HEXADECIMAL;
+          end = ++begin;
+        } else {
+          /* ASCII digits. */
+          type = DECIMAL;
+        }
+      }
+
+      entityCharacters = entity = characters = EMPTY;
+      test = TESTS[type];
+      end--;
+
+      while (++end < length) {
+        following = at(end);
+
+        if (!test(following)) {
+          break;
+        }
+
+        characters += following;
+
+        /* Check if we can match a legacy named
+         * reference.  If so, we cache that as the
+         * last viable named reference.  This
+         * ensures we do not need to walk backwards
+         * later. */
+        if (type === NAMED && has(legacy, characters)) {
+          entityCharacters = characters;
+          entity = legacy[characters];
+        }
+      }
+
+      terminated = at(end) === SEMICOLON;
+
+      if (terminated) {
+        end++;
+
+        if (type === NAMED && has(characterEntities, characters)) {
+          entityCharacters = characters;
+          entity = characterEntities[characters];
+        }
+      }
+
+      diff = 1 + end - start;
+
+      if (!terminated && !nonTerminated) {
+        /* Empty. */
+      } else if (!characters) {
+        /* An empty (possible) entity is valid, unless
+         * its numeric (thus an ampersand followed by
+         * an octothorp). */
+        if (type !== NAMED) {
+          warning(NUMERIC_EMPTY, diff);
+        }
+      } else if (type === NAMED) {
+        /* An ampersand followed by anything
+         * unknown, and not terminated, is invalid. */
+        if (terminated && !entity) {
+          warning(NAMED_UNKNOWN, 1);
+        } else {
+          /* If theres something after an entity
+           * name which is not known, cap the
+           * reference. */
+          if (entityCharacters !== characters) {
+            end = begin + entityCharacters.length;
+            diff = 1 + end - begin;
+            terminated = false;
+          }
+
+          /* If the reference is not terminated,
+           * warn. */
+          if (!terminated) {
+            reason = entityCharacters ?
+              NAMED_NOT_TERMINATED :
+              NAMED_EMPTY;
+
+            if (!settings.attribute) {
+              warning(reason, diff);
+            } else {
+              following = at(end);
+
+              if (following === EQUAL) {
+                warning(reason, diff);
+                entity = null;
+              } else if (alphanumerical(following)) {
+                entity = null;
+              } else {
+                warning(reason, diff);
+              }
+            }
+          }
+        }
+
+        reference = entity;
+      } else {
+        if (!terminated) {
+          /* All non-terminated numeric entities are
+           * not rendered, and trigger a warning. */
+          warning(NUMERIC_NOT_TERMINATED, diff);
+        }
+
+        /* When terminated and number, parse as
+         * either hexadecimal or decimal. */
+        reference = parseInt(characters, BASE[type]);
+
+        /* Trigger a warning when the parsed number
+         * is prohibited, and replace with
+         * replacement character. */
+        if (isProhibited(reference)) {
+          warning(NUMERIC_PROHIBITED, diff);
+
+          reference = REPLACEMENT;
+        } else if (reference in invalid) {
+          /* Trigger a warning when the parsed number
+           * is disallowed, and replace by an
+           * alternative. */
+          warning(NUMERIC_DISALLOWED, diff);
+
+          reference = invalid[reference];
+        } else {
+          /* Parse the number. */
+          output = EMPTY;
+
+          /* Trigger a warning when the parsed
+           * number should not be used. */
+          if (isWarning(reference)) {
+            warning(NUMERIC_DISALLOWED, diff);
+          }
+
+          /* Stringify the number. */
+          if (reference > 0xFFFF) {
+            reference -= 0x10000;
+            output += fromCharCode((reference >>> (10 & 0x3FF)) | 0xD800);
+            reference = 0xDC00 | (reference & 0x3FF);
+          }
+
+          reference = output + fromCharCode(reference);
+        }
+      }
+
+      /* If we could not find a reference, queue the
+       * checked characters (as normal characters),
+       * and move the pointer to their end. This is
+       * possible because we can be certain neither
+       * newlines nor ampersands are included. */
+      if (!reference) {
+        characters = value.slice(start - 1, end);
+        queue += characters;
+        column += characters.length;
+        index = end - 1;
+      } else {
+        /* Found it! First eat the queued
+         * characters as normal text, then eat
+         * an entity. */
+        flush();
+
+        prev = now();
+        index = end - 1;
+        column += end - start + 1;
+        result.push(reference);
+        next = now();
+        next.offset++;
+
+        if (handleReference) {
+          handleReference.call(referenceContext, reference, {
+            start: prev,
+            end: next
+          }, value.slice(start - 1, end));
+        }
+
+        prev = next;
+      }
+    }
+  }
+
+  /* Return the reduced nodes, and any possible warnings. */
+  return result.join(EMPTY);
+
+  /**
+   * Get current position.
+   *
+   * @return {Object} - Positional information of a
+   *   single point.
+   */
+  function now() {
+    return {
+      line: line,
+      column: column,
+      offset: index + (pos.offset || 0)
+    };
+  }
+
+  /**
+   * “Throw” a parse-error: a warning.
+   *
+   * @param {number} code - Identifier of reason for
+   *   failing.
+   * @param {number} offset - Offset in characters from
+   *   the current position point at which the
+   *   parse-error ocurred, cannot point past newlines.
+   */
+  function parseError(code, offset) {
+    var position = now();
+
+    position.column += offset;
+    position.offset += offset;
+
+    handleWarning.call(warningContext, MESSAGES[code], position, code);
+  }
+
+  /**
+   * Get character at position.
+   *
+   * @param {number} position - Indice of character in `value`.
+   * @return {string} - Character at `position` in
+   *   `value`.
+   */
+  function at(position) {
+    return value.charAt(position);
+  }
+
+  /**
+   * Flush `queue` (normal text). Macro invoked before
+   * each entity and at the end of `value`.
+   *
+   * Does nothing when `queue` is empty.
+   */
+  function flush() {
+    if (queue) {
+      result.push(queue);
+
+      if (handleText) {
+        handleText.call(textContext, queue, {
+          start: prev,
+          end: now()
+        });
+      }
+
+      queue = EMPTY;
+    }
+  }
+}
+
+/**
+ * Check whether `character` is outside the permissible
+ * unicode range.
+ *
+ * @param {number} code - Value.
+ * @return {boolean} - Whether `character` is an
+ *   outside the permissible unicode range.
+ */
+function isProhibited(code) {
+  return (code >= 0xD800 && code <= 0xDFFF) || (code > 0x10FFFF);
+}
+
+/**
+ * Check whether `character` is disallowed.
+ *
+ * @param {number} code - Value.
+ * @return {boolean} - Whether `character` is disallowed.
+ */
+function isWarning(code) {
+  if (
+    (code >= 0x0001 && code <= 0x0008) ||
+    code === 0x000B ||
+    (code >= 0x000D && code <= 0x001F) ||
+    (code >= 0x007F && code <= 0x009F) ||
+    (code >= 0xFDD0 && code <= 0xFDEF) ||
+    (code & 0xFFFF) === 0xFFFF ||
+    (code & 0xFFFF) === 0xFFFE
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+},{"character-entities":10,"character-entities-legacy":9,"character-reference-invalid":11,"has":19,"is-alphanumerical":22,"is-decimal":23,"is-hexadecimal":24}],44:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],45:[function(require,module,exports){
+/*!
+ * repeat-string <https://github.com/jonschlinkert/repeat-string>
+ *
+ * Copyright (c) 2014-2015, Jon Schlinkert.
+ * Licensed under the MIT License.
+ */
+
+'use strict';
+
+/**
+ * Results cache
+ */
+
+var res = '';
+var cache;
+
+/**
+ * Expose `repeat`
+ */
+
+module.exports = repeat;
+
+/**
+ * Repeat the given `string` the specified `number`
+ * of times.
+ *
+ * **Example:**
+ *
+ * ```js
+ * var repeat = require('repeat-string');
+ * repeat('A', 5);
+ * //=> AAAAA
+ * ```
+ *
+ * @param {String} `string` The string to repeat
+ * @param {Number} `number` The number of times to repeat the string
+ * @return {String} Repeated string
+ * @api public
+ */
+
+function repeat(str, num) {
+  if (typeof str !== 'string') {
+    throw new TypeError('expected a string');
+  }
+
+  // cover common, quick use cases
+  if (num === 1) return str;
+  if (num === 2) return str + str;
+
+  var max = str.length * num;
+  if (cache !== str || typeof cache === 'undefined') {
+    cache = str;
+    res = '';
+  } else if (res.length >= max) {
+    return res.substr(0, max);
+  }
+
+  while (max > res.length && num > 1) {
+    if (num & 1) {
+      res += str;
+    }
+
+    num >>= 1;
+    str += str;
+  }
+
+  res += str;
+  res = res.substr(0, max);
+  return res;
+}
+
+},{}],46:[function(require,module,exports){
+module.exports=[
+  "cent",
+  "copy",
+  "divide",
+  "gt",
+  "lt",
+  "not",
+  "para",
+  "times"
+]
+
+},{}],47:[function(require,module,exports){
+'use strict';
+
+var entities = require('character-entities-html4');
+var legacy = require('character-entities-legacy');
+var has = require('has');
+var hexadecimal = require('is-hexadecimal');
+var alphanumerical = require('is-alphanumerical');
+var dangerous = require('./dangerous.json');
+
+/* Expose. */
+module.exports = encode;
+
+encode.escape = escape;
+
+/* List of enforced escapes. */
+var escapes = ['"', '\'', '<', '>', '&', '`'];
+
+/* Map of characters to names. */
+var characters = construct();
+
+/* Default escapes. */
+var EXPRESSION_ESCAPE = toExpression(escapes);
+
+/* Surrogate pairs. */
+var EXPRESSION_SURROGATE_PAIR = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g;
+
+/* Non-ASCII characters. */
+// eslint-disable-next-line no-control-regex
+var EXPRESSION_BMP = /[\x01-\t\x0B\f\x0E-\x1F\x7F\x81\x8D\x8F\x90\x9D\xA0-\uFFFF]/g;
+
+/* Encode special characters in `value`. */
+function encode(value, options) {
+  var settings = options || {};
+  var subset = settings.subset;
+  var set = subset ? toExpression(subset) : EXPRESSION_ESCAPE;
+  var escapeOnly = settings.escapeOnly;
+  var omit = settings.omitOptionalSemicolons;
+
+  value = value.replace(set, function (char, pos, val) {
+    return one(char, val.charAt(pos + 1), settings);
+  });
+
+  if (subset || escapeOnly) {
+    return value;
+  }
+
+  return value
+    .replace(EXPRESSION_SURROGATE_PAIR, function (pair, pos, val) {
+      return toHexReference(
+        ((pair.charCodeAt(0) - 0xD800) * 0x400) +
+        pair.charCodeAt(1) - 0xDC00 + 0x10000,
+        val.charAt(pos + 2),
+        omit
+      );
+    })
+    .replace(EXPRESSION_BMP, function (char, pos, val) {
+      return one(char, val.charAt(pos + 1), settings);
+    });
+}
+
+/* Shortcut to escape special characters in HTML. */
+function escape(value) {
+  return encode(value, {
+    escapeOnly: true,
+    useNamedReferences: true
+  });
+}
+
+/* Encode `char` according to `options`. */
+function one(char, next, options) {
+  var shortest = options.useShortestReferences;
+  var omit = options.omitOptionalSemicolons;
+  var named;
+  var numeric;
+
+  if (
+    (shortest || options.useNamedReferences) &&
+    has(characters, char)
+  ) {
+    named = toNamed(characters[char], next, omit, options.attribute);
+  }
+
+  if (shortest || !named) {
+    numeric = toHexReference(char.charCodeAt(0), next, omit);
+  }
+
+  if (named && (!shortest || named.length < numeric.length)) {
+    return named;
+  }
+
+  return numeric;
+}
+
+/* Transform `code` into an entity. */
+function toNamed(name, next, omit, attribute) {
+  var value = '&' + name;
+
+  if (
+    omit &&
+    has(legacy, name) &&
+    dangerous.indexOf(name) === -1 &&
+    (!attribute || (next && next !== '=' && !alphanumerical(next)))
+  ) {
+    return value;
+  }
+
+  return value + ';';
+}
+
+/* Transform `code` into a hexadecimal character reference. */
+function toHexReference(code, next, omit) {
+  var value = '&#x' + code.toString(16).toUpperCase();
+  return omit && next && !hexadecimal(next) ? value : value + ';';
+}
+
+/* Create an expression for `characters`. */
+function toExpression(characters) {
+  return new RegExp('[' + characters.join('') + ']', 'g');
+}
+
+/* Construct the map. */
+function construct() {
+  var chars = {};
+  var name;
+
+  for (name in entities) {
+    chars[entities[name]] = name;
+  }
+
+  return chars;
+}
+
+},{"./dangerous.json":46,"character-entities-html4":8,"character-entities-legacy":9,"has":19,"is-alphanumerical":22,"is-hexadecimal":24}],48:[function(require,module,exports){
+"use strict";
+
+var StructuredSource = require('./structured-source.js')["default"];
+
+
+module.exports = StructuredSource;
+
+/* vim: set sw=4 ts=4 et tw=80 : */
+
+},{"./structured-source.js":49}],49:[function(require,module,exports){
+"use strict";
+
+var _classProps = function (child, staticProps, instanceProps) {
+  if (staticProps) Object.defineProperties(child, staticProps);
+  if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
+};
+
+var upperBound = require('boundary').upperBound;
+var Position = function Position(line, column) {
+  this.line = line;
+  this.column = column;
+};
+
+exports.Position = Position;
+var SourceLocation = function SourceLocation(start, end) {
+  this.start = start;
+  this.end = end;
+};
+
+exports.SourceLocation = SourceLocation;
+var StructuredSource = (function () {
+  var StructuredSource =
+  /**
+   * @constructs StructuredSource
+   * @param {string} source - source code text.
+   */
+  function StructuredSource(source) {
+    this.indice = [0];
+    var regexp = /[\r\n\u2028\u2029]/g;
+    var length = source.length;
+    regexp.lastIndex = 0;
+    while (true) {
+      var result = regexp.exec(source);
+      if (!result) {
+        break;
+      }
+      var index = result.index;
+      if (source.charCodeAt(index) === 13 /* '\r' */ && source.charCodeAt(index + 1) === 10 /* '\n' */) {
+        index += 1;
+      }
+      var nextIndex = index + 1;
+      // If there's a last line terminator, we push it to the indice.
+      // So use < instead of <=.
+      if (length < nextIndex) {
+        break;
+      }
+      this.indice.push(nextIndex);
+      regexp.lastIndex = nextIndex;
+    }
+  };
+
+  StructuredSource.prototype.locationToRange = function (loc) {
+    return [this.positionToIndex(loc.start), this.positionToIndex(loc.end)];
+  };
+
+  StructuredSource.prototype.rangeToLocation = function (range) {
+    return new SourceLocation(this.indexToPosition(range[0]), this.indexToPosition(range[1]));
+  };
+
+  StructuredSource.prototype.positionToIndex = function (pos) {
+    // Line number starts with 1.
+    // Column number starts with 0.
+    var start = this.indice[pos.line - 1];
+    return start + pos.column;
+  };
+
+  StructuredSource.prototype.indexToPosition = function (index) {
+    var startLine = upperBound(this.indice, index);
+    return new Position(startLine, index - this.indice[startLine - 1]);
+  };
+
+  _classProps(StructuredSource, null, {
+    line: {
+      get: function () {
+        return this.indice.length;
+      }
+    }
+  });
+
+  return StructuredSource;
+})();
+
+exports["default"] = StructuredSource;
+
+},{"boundary":6}],50:[function(require,module,exports){
+var traverse = module.exports = function (obj) {
+    return new Traverse(obj);
+};
+
+function Traverse (obj) {
+    this.value = obj;
+}
+
+Traverse.prototype.get = function (ps) {
+    var node = this.value;
+    for (var i = 0; i < ps.length; i ++) {
+        var key = ps[i];
+        if (!node || !hasOwnProperty.call(node, key)) {
+            node = undefined;
+            break;
+        }
+        node = node[key];
+    }
+    return node;
+};
+
+Traverse.prototype.has = function (ps) {
+    var node = this.value;
+    for (var i = 0; i < ps.length; i ++) {
+        var key = ps[i];
+        if (!node || !hasOwnProperty.call(node, key)) {
+            return false;
+        }
+        node = node[key];
+    }
+    return true;
+};
+
+Traverse.prototype.set = function (ps, value) {
+    var node = this.value;
+    for (var i = 0; i < ps.length - 1; i ++) {
+        var key = ps[i];
+        if (!hasOwnProperty.call(node, key)) node[key] = {};
+        node = node[key];
+    }
+    node[ps[i]] = value;
+    return value;
+};
+
+Traverse.prototype.map = function (cb) {
+    return walk(this.value, cb, true);
+};
+
+Traverse.prototype.forEach = function (cb) {
+    this.value = walk(this.value, cb, false);
+    return this.value;
+};
+
+Traverse.prototype.reduce = function (cb, init) {
+    var skip = arguments.length === 1;
+    var acc = skip ? this.value : init;
+    this.forEach(function (x) {
+        if (!this.isRoot || !skip) {
+            acc = cb.call(this, acc, x);
+        }
+    });
+    return acc;
+};
+
+Traverse.prototype.paths = function () {
+    var acc = [];
+    this.forEach(function (x) {
+        acc.push(this.path); 
+    });
+    return acc;
+};
+
+Traverse.prototype.nodes = function () {
+    var acc = [];
+    this.forEach(function (x) {
+        acc.push(this.node);
+    });
+    return acc;
+};
+
+Traverse.prototype.clone = function () {
+    var parents = [], nodes = [];
+    
+    return (function clone (src) {
+        for (var i = 0; i < parents.length; i++) {
+            if (parents[i] === src) {
+                return nodes[i];
+            }
+        }
+        
+        if (typeof src === 'object' && src !== null) {
+            var dst = copy(src);
+            
+            parents.push(src);
+            nodes.push(dst);
+            
+            forEach(objectKeys(src), function (key) {
+                dst[key] = clone(src[key]);
+            });
+            
+            parents.pop();
+            nodes.pop();
+            return dst;
+        }
+        else {
+            return src;
+        }
+    })(this.value);
+};
+
+function walk (root, cb, immutable) {
+    var path = [];
+    var parents = [];
+    var alive = true;
+    
+    return (function walker (node_) {
+        var node = immutable ? copy(node_) : node_;
+        var modifiers = {};
+        
+        var keepGoing = true;
+        
+        var state = {
+            node : node,
+            node_ : node_,
+            path : [].concat(path),
+            parent : parents[parents.length - 1],
+            parents : parents,
+            key : path.slice(-1)[0],
+            isRoot : path.length === 0,
+            level : path.length,
+            circular : null,
+            update : function (x, stopHere) {
+                if (!state.isRoot) {
+                    state.parent.node[state.key] = x;
+                }
+                state.node = x;
+                if (stopHere) keepGoing = false;
+            },
+            'delete' : function (stopHere) {
+                delete state.parent.node[state.key];
+                if (stopHere) keepGoing = false;
+            },
+            remove : function (stopHere) {
+                if (isArray(state.parent.node)) {
+                    state.parent.node.splice(state.key, 1);
+                }
+                else {
+                    delete state.parent.node[state.key];
+                }
+                if (stopHere) keepGoing = false;
+            },
+            keys : null,
+            before : function (f) { modifiers.before = f },
+            after : function (f) { modifiers.after = f },
+            pre : function (f) { modifiers.pre = f },
+            post : function (f) { modifiers.post = f },
+            stop : function () { alive = false },
+            block : function () { keepGoing = false }
+        };
+        
+        if (!alive) return state;
+        
+        function updateState() {
+            if (typeof state.node === 'object' && state.node !== null) {
+                if (!state.keys || state.node_ !== state.node) {
+                    state.keys = objectKeys(state.node)
+                }
+                
+                state.isLeaf = state.keys.length == 0;
+                
+                for (var i = 0; i < parents.length; i++) {
+                    if (parents[i].node_ === node_) {
+                        state.circular = parents[i];
+                        break;
+                    }
+                }
+            }
+            else {
+                state.isLeaf = true;
+                state.keys = null;
+            }
+            
+            state.notLeaf = !state.isLeaf;
+            state.notRoot = !state.isRoot;
+        }
+        
+        updateState();
+        
+        // use return values to update if defined
+        var ret = cb.call(state, state.node);
+        if (ret !== undefined && state.update) state.update(ret);
+        
+        if (modifiers.before) modifiers.before.call(state, state.node);
+        
+        if (!keepGoing) return state;
+        
+        if (typeof state.node == 'object'
+        && state.node !== null && !state.circular) {
+            parents.push(state);
+            
+            updateState();
+            
+            forEach(state.keys, function (key, i) {
+                path.push(key);
+                
+                if (modifiers.pre) modifiers.pre.call(state, state.node[key], key);
+                
+                var child = walker(state.node[key]);
+                if (immutable && hasOwnProperty.call(state.node, key)) {
+                    state.node[key] = child.node;
+                }
+                
+                child.isLast = i == state.keys.length - 1;
+                child.isFirst = i == 0;
+                
+                if (modifiers.post) modifiers.post.call(state, child);
+                
+                path.pop();
+            });
+            parents.pop();
+        }
+        
+        if (modifiers.after) modifiers.after.call(state, state.node);
+        
+        return state;
+    })(root).node;
+}
+
+function copy (src) {
+    if (typeof src === 'object' && src !== null) {
+        var dst;
+        
+        if (isArray(src)) {
+            dst = [];
+        }
+        else if (isDate(src)) {
+            dst = new Date(src.getTime ? src.getTime() : src);
+        }
+        else if (isRegExp(src)) {
+            dst = new RegExp(src);
+        }
+        else if (isError(src)) {
+            dst = { message: src.message };
+        }
+        else if (isBoolean(src)) {
+            dst = new Boolean(src);
+        }
+        else if (isNumber(src)) {
+            dst = new Number(src);
+        }
+        else if (isString(src)) {
+            dst = new String(src);
+        }
+        else if (Object.create && Object.getPrototypeOf) {
+            dst = Object.create(Object.getPrototypeOf(src));
+        }
+        else if (src.constructor === Object) {
+            dst = {};
+        }
+        else {
+            var proto =
+                (src.constructor && src.constructor.prototype)
+                || src.__proto__
+                || {}
+            ;
+            var T = function () {};
+            T.prototype = proto;
+            dst = new T;
+        }
+        
+        forEach(objectKeys(src), function (key) {
+            dst[key] = src[key];
+        });
+        return dst;
+    }
+    else return src;
+}
+
+var objectKeys = Object.keys || function keys (obj) {
+    var res = [];
+    for (var key in obj) res.push(key)
+    return res;
+};
+
+function toS (obj) { return Object.prototype.toString.call(obj) }
+function isDate (obj) { return toS(obj) === '[object Date]' }
+function isRegExp (obj) { return toS(obj) === '[object RegExp]' }
+function isError (obj) { return toS(obj) === '[object Error]' }
+function isBoolean (obj) { return toS(obj) === '[object Boolean]' }
+function isNumber (obj) { return toS(obj) === '[object Number]' }
+function isString (obj) { return toS(obj) === '[object String]' }
+
+var isArray = Array.isArray || function isArray (xs) {
+    return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+var forEach = function (xs, fn) {
+    if (xs.forEach) return xs.forEach(fn)
+    else for (var i = 0; i < xs.length; i++) {
+        fn(xs[i], i, xs);
+    }
+};
+
+forEach(objectKeys(Traverse.prototype), function (key) {
+    traverse[key] = function (obj) {
+        var args = [].slice.call(arguments, 1);
+        var t = new Traverse(obj);
+        return t[key].apply(t, args);
+    };
+});
+
+var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
+    return key in obj;
+};
+
+},{}],51:[function(require,module,exports){
+'use strict';
+
+module.exports = trimTrailingLines;
+
+var line = '\n';
+
+/* Remove final newline characters from `value`. */
+function trimTrailingLines(value) {
+  var val = String(value);
+  var index = val.length;
+
+  while (val.charAt(--index) === line) { /* empty */ }
+
+  return val.slice(0, index + 1);
+}
+
+},{}],52:[function(require,module,exports){
+
+exports = module.exports = trim;
+
+function trim(str){
+  return str.replace(/^\s*|\s*$/g, '');
+}
+
+exports.left = function(str){
+  return str.replace(/^\s*/, '');
+};
+
+exports.right = function(str){
+  return str.replace(/\s*$/, '');
+};
+
+},{}],53:[function(require,module,exports){
+/**
+ * @author Titus Wormer
+ * @copyright 2016 Titus Wormer
+ * @license MIT
+ * @module trough
+ * @fileoverview Middleware.  Inspired by `segmentio/ware`,
+ *   but able to change the values from transformer to
+ *   transformer.
+ */
+
+'use strict';
+
+/* Expose. */
+module.exports = trough;
+
+/* Methods. */
+var slice = [].slice;
+
+/**
+ * Create new middleware.
+ *
+ * @return {Object} - Middlewre.
+ */
+function trough() {
+  var fns = [];
+  var middleware = {};
+
+  middleware.run = run;
+  middleware.use = use;
+
+  return middleware;
+
+  /**
+   * Run `fns`.  Last argument must be
+   * a completion handler.
+   *
+   * @param {...*} input - Parameters
+   */
+  function run() {
+    var index = -1;
+    var input = slice.call(arguments, 0, -1);
+    var done = arguments[arguments.length - 1];
+
+    if (typeof done !== 'function') {
+      throw new Error('Expected function as last argument, not ' + done);
+    }
+
+    next.apply(null, [null].concat(input));
+
+    return;
+
+    /**
+     * Run the next `fn`, if any.
+     *
+     * @param {Error?} err - Failure.
+     * @param {...*} values - Other input.
+     */
+    function next(err) {
+      var fn = fns[++index];
+      var params = slice.call(arguments, 0);
+      var values = params.slice(1);
+      var length = input.length;
+      var pos = -1;
+
+      if (err) {
+        done(err);
+        return;
+      }
+
+      /* Copy non-nully input into values. */
+      while (++pos < length) {
+        if (values[pos] === null || values[pos] === undefined) {
+          values[pos] = input[pos];
+        }
+      }
+
+      input = values;
+
+      /* Next or done. */
+      if (fn) {
+        wrap(fn, next).apply(null, input);
+      } else {
+        done.apply(null, [null].concat(input));
+      }
+    }
+  }
+
+  /**
+   * Add `fn` to the list.
+   *
+   * @param {Function} fn - Anything `wrap` accepts.
+   */
+  function use(fn) {
+    if (typeof fn !== 'function') {
+      throw new Error('Expected `fn` to be a function, not ' + fn);
+    }
+
+    fns.push(fn);
+
+    return middleware;
+  }
+}
+
+/**
+ * Wrap `fn`.  Can be sync or async; return a promise,
+ * receive a completion handler, return new values and
+ * errors.
+ *
+ * @param {Function} fn - Thing to wrap.
+ * @param {Function} next - Completion handler.
+ * @return {Function} - Wrapped `fn`.
+ */
+function wrap(fn, next) {
+  var invoked;
+
+  return wrapped;
+
+  function wrapped() {
+    var params = slice.call(arguments, 0);
+    var callback = fn.length > params.length;
+    var result;
+
+    if (callback) {
+      params.push(done);
+    }
+
+    try {
+      result = fn.apply(null, params);
+    } catch (err) {
+      /* Well, this is quite the pickle.  `fn` received
+       * a callback and invoked it (thus continuing the
+       * pipeline), but later also threw an error.
+       * We’re not about to restart the pipeline again,
+       * so the only thing left to do is to throw the
+       * thing instea. */
+      if (callback && invoked) {
+        throw err;
+      }
+
+      return done(err);
+    }
+
+    if (!callback) {
+      if (result && typeof result.then === 'function') {
+        result.then(then, done);
+      } else if (result instanceof Error) {
+        done(result);
+      } else {
+        then(result);
+      }
+    }
+  }
+
+  /**
+   * Invoke `next`, only once.
+   *
+   * @param {Error?} err - Optional error.
+   */
+  function done() {
+    if (!invoked) {
+      invoked = true;
+
+      next.apply(null, arguments);
+    }
+  }
+
+  /**
+   * Invoke `done` with one value.
+   * Tracks if an error is passed, too.
+   *
+   * @param {*} value - Optional value.
+   */
+  function then(value) {
+    done(null, value);
+  }
+}
+
+},{}],54:[function(require,module,exports){
+// LICENSE : MIT
+"use strict";
+var _prototypeProperties = function (child, staticProps, instanceProps) {
+  if (staticProps) Object.defineProperties(child, staticProps);
+  if (instanceProps) Object.defineProperties(child.prototype, instanceProps);
+};
+
+function isNode(node) {
+  if (node == null) {
+    return false;
+  }
+  return typeof node === "object" && (typeof node.type === "string" || typeof node.t === "string");
+}
+function TxtElement(node, path, wrap, ref) {
+  this.node = node;
+  this.path = path;
+  this.wrap = wrap;
+  this.ref = ref;
+}
+
+var BREAK = {},
+    SKIP = {},
+    REMOVE = {};
+var VisitorOption = {
+  Break: BREAK,
+  Skip: SKIP,
+  Remove: REMOVE
+};
+var Controller = (function () {
+  function Controller() {}
+
+  _prototypeProperties(Controller, null, {
+    __willStartTraverse: {
+      value: function WillStartTraverse(root, visitor) {
+        this.__current = null;
+        this.visitor = visitor;
+        this.root = root;
+        this.__worklist = [];
+        this.__leavelist = [];
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    __execute: {
+      value: function Execute(callback, element) {
+        var previous, result;
+
+        result = undefined;
+
+        previous = this.__current;
+        this.__current = element;
+        if (callback) {
+          result = callback.call(this, element.node, this.__leavelist[this.__leavelist.length - 1].node);
+        }
+        this.__current = previous;
+
+        return result;
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    parents: {
+
+      /**
+       * Gets parent nodes of current node.
+       * The parent nodes are returned in order from the closest parent to the outer ones.
+       * Current node is {@link current}.
+       * @returns {Array}
+       * @public
+       */
+      value: function parents() {
+        var i, iz, result;
+        // first node is sentinel
+        result = [];
+        for (i = 1, iz = this.__leavelist.length; i < iz; ++i) {
+          result.push(this.__leavelist[i].node);
+        }
+        return result;
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    current: {
+
+      /**
+       * Gets current node during traverse.
+       * @returns {TxtNode}
+       * @public
+       */
+      value: function current() {
+        return this.__current.node;
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    },
+    traverse: {
+      value: function traverse(root, visitor) {
+        this.__willStartTraverse(root, visitor);
+
+        var sentinel = {};
+
+        // reference
+        var worklist = this.__worklist;
+        var leavelist = this.__leavelist;
+
+        // initialize
+        worklist.push(new TxtElement(root, null, null, null));
+        leavelist.push(new TxtElement(null, null, null, null));
+
+        while (worklist.length) {
+          var element = worklist.pop();
+
+          if (element === sentinel) {
+            element = leavelist.pop();
+
+            var ret = this.__execute(visitor.leave, element);
+
+            if (ret === BREAK) {
+              return;
+            }
+            continue;
+          }
+
+          if (element.node) {
+            ret = this.__execute(visitor.enter, element);
+
+            if (ret === BREAK) {
+              return;
+            }
+
+            worklist.push(sentinel);
+            leavelist.push(element);
+
+            if (ret === SKIP) {
+              continue;
+            }
+
+            var node = element.node;
+            var nodeType = element.wrap || node.type;
+            var candidates = Object.keys(node);
+
+            var current = candidates.length;
+            while ((current -= 1) >= 0) {
+              var key = candidates[current];
+              var candidate = node[key];
+              if (!candidate) {
+                continue;
+              }
+
+              if (Array.isArray(candidate)) {
+                var current2 = candidate.length;
+                while ((current2 -= 1) >= 0) {
+                  if (!candidate[current2]) {
+                    continue;
+                  }
+                  if (isNode(candidate[current2])) {
+                    element = new TxtElement(candidate[current2], [key, current2], null, null);
+                  } else {
+                    continue;
+                  }
+                  worklist.push(element);
+                }
+              } else if (isNode(candidate)) {
+                worklist.push(new TxtElement(candidate, key, null, null));
+              }
+            }
+          }
+        }
+      },
+      writable: true,
+      enumerable: true,
+      configurable: true
+    }
+  });
+
+  return Controller;
+})();
+
+
+
+
+function traverse(root, visitor) {
+  var controller = new Controller();
+  return controller.traverse(root, visitor);
+}
+exports.Controller = Controller;
+exports.traverse = traverse;
+exports.VisitorOption = VisitorOption;
+
+
+},{}],55:[function(require,module,exports){
+/**
+ * @author Titus Wormer
+ * @copyright 2015 Titus Wormer
+ * @license MIT
+ * @module unherit
+ * @fileoverview Create a custom constructor which can be modified
+ *   without affecting the original class.
+ */
+
+'use strict';
+
+/* Dependencies. */
+var xtend = require('xtend');
+var inherits = require('inherits');
+
+/* Expose. */
+module.exports = unherit;
+
+/**
+ * Create a custom constructor which can be modified
+ * without affecting the original class.
+ *
+ * @param {Function} Super - Super-class.
+ * @return {Function} - Constructor acting like `Super`,
+ *   which can be modified without affecting the original
+ *   class.
+ */
+function unherit(Super) {
+  var result;
+  var key;
+  var value;
+
+  inherits(Of, Super);
+  inherits(From, Of);
+
+  /* Clone values. */
+  result = Of.prototype;
+
+  for (key in result) {
+    value = result[key];
+
+    if (value && typeof value === 'object') {
+      result[key] = 'concat' in value ? value.concat() : xtend(value);
+    }
+  }
+
+  return Of;
+
+  /**
+   * Constructor accepting a single argument,
+   * which itself is an `arguments` object.
+   */
+  function From(parameters) {
+    return Super.apply(this, parameters);
+  }
+
+  /**
+   * Constructor accepting variadic arguments.
+   */
+  function Of() {
+    if (!(this instanceof Of)) {
+      return new From(arguments);
+    }
+
+    return Super.apply(this, arguments);
+  }
+}
+
+},{"inherits":20,"xtend":62}],56:[function(require,module,exports){
+/**
+ * @author Titus Wormer
+ * @copyright 2016 Titus Wormer
+ * @license MIT
+ * @module unist:util:remove-position
+ * @fileoverview Remove `position`s from a unist tree.
+ */
+
+'use strict';
+
+/* eslint-env commonjs */
+
+/* Dependencies. */
+var visit = require('unist-util-visit');
+
+/* Expose. */
+module.exports = removePosition;
+
+/**
+ * Remove `position`s from `tree`.
+ *
+ * @param {Node} tree - Node.
+ * @return {Node} - Node without `position`s.
+ */
+function removePosition(node, force) {
+  visit(node, force ? hard : soft);
+  return node;
+}
+
+/**
+ * Delete `position`.
+ */
+function hard(node) {
+  delete node.position;
+}
+
+/**
+ * Remove `position` softly.
+ */
+function soft(node) {
+  node.position = undefined;
+}
+
+},{"unist-util-visit":57}],57:[function(require,module,exports){
+'use strict';
+
+/* Expose. */
+module.exports = visit;
+
+/* Visit. */
+function visit(tree, type, visitor, reverse) {
+  if (typeof type === 'function') {
+    reverse = visitor;
+    visitor = type;
+    type = null;
+  }
+
+  one(tree);
+
+  return;
+
+  /* Visit a single node. */
+  function one(node, index, parent) {
+    var result;
+
+    index = index || (parent ? 0 : null);
+
+    if (!type || node.type === type) {
+      result = visitor(node, index, parent || null);
+    }
+
+    if (node.children && result !== false) {
+      return all(node.children, node);
+    }
+
+    return result;
+  }
+
+  /* Visit children in `parent`. */
+  function all(children, parent) {
+    var step = reverse ? -1 : 1;
+    var max = children.length;
+    var min = -1;
+    var index = (reverse ? max : min) + step;
+    var child;
+
+    while (index > min && index < max) {
+      child = children[index];
+
+      if (child && one(child, index, parent) === false) {
+        return false;
+      }
+
+      index += step;
+    }
+
+    return true;
+  }
+}
+
 },{}],58:[function(require,module,exports){
+/**
+ * @author Titus Wormer
+ * @copyright 2016 Titus Wormer
+ * @license MIT
+ * @module vfile-location
+ * @fileoverview Convert between positions (line and column-based)
+ *   and offsets (range-based) locations in a virtual file.
+ */
+
+'use strict';
+
+/* Expose. */
+module.exports = factory;
+
+/**
+ * Factory.
+ *
+ * @param {VFile|string|Buffer} file - Virtual file or document.
+ */
+function factory(file) {
+  var contents = indices(String(file));
+
+  return {
+    toPosition: offsetToPositionFactory(contents),
+    toOffset: positionToOffsetFactory(contents)
+  };
+}
+
+/**
+ * Factory to get the line and column-based `position` for
+ * `offset` in the bound indices.
+ *
+ * @param {Array.<number>} indices - Indices of
+ *   line-breaks in `value`.
+ * @return {Function} - Bound method.
+ */
+function offsetToPositionFactory(indices) {
+  return offsetToPosition;
+
+  /**
+   * Get the line and column-based `position` for
+   * `offset` in the bound indices.
+   *
+   * @param {number} offset - Offset.
+   * @return {Position} - Object with `line`, `column`,
+   *   and `offset` properties based on the bound
+   *   `indices`.  An empty object when given invalid
+   *   or out of bounds input.
+   */
+  function offsetToPosition(offset) {
+    var index = -1;
+    var length = indices.length;
+
+    if (offset < 0) {
+      return {};
+    }
+
+    while (++index < length) {
+      if (indices[index] > offset) {
+        return {
+          line: index + 1,
+          column: (offset - (indices[index - 1] || 0)) + 1,
+          offset: offset
+        };
+      }
+    }
+
+    return {};
+  }
+}
+
+/**
+ * Factory to get the `offset` for a line and column-based
+ * `position` in the bound indices.
+ *
+ * @param {Array.<number>} indices - Indices of
+ *   line-breaks in `value`.
+ * @return {Function} - Bound method.
+ */
+function positionToOffsetFactory(indices) {
+  return positionToOffset;
+
+  /**
+   * Get the `offset` for a line and column-based
+   * `position` in the bound indices.
+   *
+   * @param {Position} position - Object with `line` and
+   *   `column` properties.
+   * @return {number} - Offset. `-1` when given invalid
+   *   or out of bounds input.
+   */
+  function positionToOffset(position) {
+    var line = position && position.line;
+    var column = position && position.column;
+
+    if (!isNaN(line) && !isNaN(column) && line - 1 in indices) {
+      return ((indices[line - 2] || 0) + column - 1) || 0;
+    }
+
+    return -1;
+  }
+}
+
+/**
+ * Get indices of line-breaks in `value`.
+ *
+ * @param {string} value - Value.
+ * @return {Array.<number>} - List of indices of
+ *   line-breaks.
+ */
+function indices(value) {
+  var result = [];
+  var index = value.indexOf('\n');
+
+  while (index !== -1) {
+    result.push(index + 1);
+    index = value.indexOf('\n', index + 1);
+  }
+
+  result.push(value.length + 1);
+
+  return result;
+}
+
+},{}],59:[function(require,module,exports){
+!function(t,n){"function"==typeof define&&define.amd?define(["word-width"],n):"object"==typeof module&&module.exports?module.exports=n(require("word-width")):t.WordTable=n(t.WordWidth)}(this,function(t){return function(n,o){function e(t,n){var o,e="";for(o=0;o<t;o++)e+=n;return e}function r(n,o,e){c=Math.max(o+1,c),d.length<=o&&d.push(0);for(var r=t(e);p.length<=n;)p.push([]);p[n].length<=o?p[n].push(r):p[n][o]=r,d[o]=Math.max(r,d[o])}function i(){s=tableBody.concat(),s.splice(0,0,y),d=[],c=0;var t,n,o,e,i=s.length;for(t=0;t<i;t++)for(o=s[t],e=o.length,n=0;n<e;n++)r(t,n,o[n])}function u(t){var n,o,r="+";for(n=0;n<c;n++)o=d[n]+2*t[n],r+=e(o,"-"),r+="+";return r}function f(t,n,o){var r,i,u,f,h="|",a=t.length;for(r=0;r<c;r++)r>=a?(h+=e(d[r]+2*n[r]," "),h+="|"):(i=(d[r]-p[o][r])/2,u=Math.floor(i),f=Math.ceil(i),h+=e(n[r]+u," "),h+=t[r],h+=e(n[r]+f," "),h+="|");return h}function h(){var t,n=[],o=s.length;for(t=0;t<c;t++)n.push(Math.ceil(d[t]/4));var e=u(n);for(a=[e],t=0;t<o;t++)a.push(f(s[t],n,t)),a.push(e)}var a,d,c,s,l=!0,p=[],y=n||[];tableBody=o||[],this.string=function(){return this.array().join("\n")},this.array=function(){if(l){if(i(),h(),0===c)return[];l=!1}return a},this.setHeader=function(t){y=t||[],l=!0},this.appendBody=function(t){tableBody.push(t),l=!0},this.setBody=function(t){tableBody=t,l=!0},this.reset=function(){l=!0,y=[],tableBody=[]}}});
+},{"word-width":60}],60:[function(require,module,exports){
+!function(n,e){"object"==typeof module&&module.exports?module.exports=e():n.WordWidth=e()}("undefined"!=typeof window?window:this,function(){function n(n,e){var r,t=0,o=e.length-1;if(n<e[0][0]||n>e[o][1])return 0;for(;o>=t;)if(r=parseInt((t+o)/2),n>e[r][1])t=r+1;else{if(!(n<e[r][0]))return 1;o=r-1}return 0}function e(e){return 0===e||847===e||e>=8203&&e<=8207||8232===e||8233===e||e>=8234&&e<=8238||e>=8288&&e<=8291?0:e<32||e>=127&&e<160?-1:n(e,r)?0:1+n(e,t)}var r=[[768,879],[1155,1161],[1425,1469],[1471,1471],[1473,1474],[1476,1477],[1479,1479],[1552,1562],[1611,1631],[1648,1648],[1750,1756],[1759,1764],[1767,1768],[1770,1773],[1809,1809],[1840,1866],[1958,1968],[2027,2035],[2070,2073],[2075,2083],[2085,2087],[2089,2093],[2137,2139],[2260,2273],[2275,2306],[2362,2362],[2364,2364],[2369,2376],[2381,2381],[2385,2391],[2402,2403],[2433,2433],[2492,2492],[2497,2500],[2509,2509],[2530,2531],[2561,2562],[2620,2620],[2625,2626],[2631,2632],[2635,2637],[2641,2641],[2672,2673],[2677,2677],[2689,2690],[2748,2748],[2753,2757],[2759,2760],[2765,2765],[2786,2787],[2817,2817],[2876,2876],[2879,2879],[2881,2884],[2893,2893],[2902,2902],[2914,2915],[2946,2946],[3008,3008],[3021,3021],[3072,3072],[3134,3136],[3142,3144],[3146,3149],[3157,3158],[3170,3171],[3201,3201],[3260,3260],[3263,3263],[3270,3270],[3276,3277],[3298,3299],[3329,3329],[3393,3396],[3405,3405],[3426,3427],[3530,3530],[3538,3540],[3542,3542],[3633,3633],[3636,3642],[3655,3662],[3761,3761],[3764,3769],[3771,3772],[3784,3789],[3864,3865],[3893,3893],[3895,3895],[3897,3897],[3953,3966],[3968,3972],[3974,3975],[3981,3991],[3993,4028],[4038,4038],[4141,4144],[4146,4151],[4153,4154],[4157,4158],[4184,4185],[4190,4192],[4209,4212],[4226,4226],[4229,4230],[4237,4237],[4253,4253],[4957,4959],[5906,5908],[5938,5940],[5970,5971],[6002,6003],[6068,6069],[6071,6077],[6086,6086],[6089,6099],[6109,6109],[6155,6157],[6277,6278],[6313,6313],[6432,6434],[6439,6440],[6450,6450],[6457,6459],[6679,6680],[6683,6683],[6742,6742],[6744,6750],[6752,6752],[6754,6754],[6757,6764],[6771,6780],[6783,6783],[6832,6846],[6912,6915],[6964,6964],[6966,6970],[6972,6972],[6978,6978],[7019,7027],[7040,7041],[7074,7077],[7080,7081],[7083,7085],[7142,7142],[7144,7145],[7149,7149],[7151,7153],[7212,7219],[7222,7223],[7376,7378],[7380,7392],[7394,7400],[7405,7405],[7412,7412],[7416,7417],[7616,7669],[7675,7679],[8400,8432],[11503,11505],[11647,11647],[11744,11775],[12330,12333],[12441,12442],[42607,42610],[42612,42621],[42654,42655],[42736,42737],[43010,43010],[43014,43014],[43019,43019],[43045,43046],[43204,43205],[43232,43249],[43302,43309],[43335,43345],[43392,43394],[43443,43443],[43446,43449],[43452,43452],[43493,43493],[43561,43566],[43569,43570],[43573,43574],[43587,43587],[43596,43596],[43644,43644],[43696,43696],[43698,43700],[43703,43704],[43710,43711],[43713,43713],[43756,43757],[43766,43766],[44005,44005],[44008,44008],[44013,44013],[64286,64286],[65024,65039],[65056,65071],[66045,66045],[66272,66272],[66422,66426],[68097,68099],[68101,68102],[68108,68111],[68152,68154],[68159,68159],[68325,68326],[69633,69633],[69688,69702],[69759,69761],[69811,69814],[69817,69818],[69888,69890],[69927,69931],[69933,69940],[70003,70003],[70016,70017],[70070,70078],[70090,70092],[70191,70193],[70196,70196],[70198,70199],[70206,70206],[70367,70367],[70371,70378],[70400,70401],[70460,70460],[70464,70464],[70502,70508],[70512,70516],[70712,70719],[70722,70724],[70726,70726],[70835,70840],[70842,70842],[70847,70848],[70850,70851],[71090,71093],[71100,71101],[71103,71104],[71132,71133],[71219,71226],[71229,71229],[71231,71232],[71339,71339],[71341,71341],[71344,71349],[71351,71351],[71453,71455],[71458,71461],[71463,71467],[72752,72758],[72760,72765],[72767,72767],[72850,72871],[72874,72880],[72882,72883],[72885,72886],[92912,92916],[92976,92982],[94095,94098],[113821,113822],[119143,119145],[119163,119170],[119173,119179],[119210,119213],[119362,119364],[121344,121398],[121403,121452],[121461,121461],[121476,121476],[121499,121503],[121505,121519],[122880,122886],[122888,122904],[122907,122913],[122915,122916],[122918,122922],[125136,125142],[125252,125258],[917760,917999]],t=[[4352,4447],[8986,8987],[9001,9002],[9193,9196],[9200,9200],[9203,9203],[9725,9726],[9748,9749],[9800,9811],[9855,9855],[9875,9875],[9889,9889],[9898,9899],[9917,9918],[9924,9925],[9934,9934],[9940,9940],[9962,9962],[9970,9971],[9973,9973],[9978,9978],[9981,9981],[9989,9989],[9994,9995],[10024,10024],[10060,10060],[10062,10062],[10067,10069],[10071,10071],[10133,10135],[10160,10160],[10175,10175],[11035,11036],[11088,11088],[11093,11093],[11904,11929],[11931,12019],[12032,12245],[12272,12283],[12288,12350],[12353,12438],[12441,12543],[12549,12589],[12593,12686],[12688,12730],[12736,12771],[12784,12830],[12832,12871],[12880,13054],[13056,19903],[19968,42124],[42128,42182],[43360,43388],[44032,55203],[63744,64255],[65040,65049],[65072,65106],[65108,65126],[65128,65131],[65281,65376],[65504,65510],[94176,94176],[94208,100332],[100352,101106],[110592,110593],[126980,126980],[127183,127183],[127374,127374],[127377,127386],[127488,127490],[127504,127547],[127552,127560],[127568,127569],[127744,127776],[127789,127797],[127799,127868],[127870,127891],[127904,127946],[127951,127955],[127968,127984],[127988,127988],[127992,128062],[128064,128064],[128066,128252],[128255,128317],[128331,128334],[128336,128359],[128378,128378],[128405,128406],[128420,128420],[128507,128591],[128640,128709],[128716,128716],[128720,128722],[128747,128748],[128756,128758],[129296,129310],[129312,129319],[129328,129328],[129331,129342],[129344,129355],[129360,129374],[129408,129425],[129472,129472],[131072,196605],[196608,262141]];return function(n){for(var r=0,t=n.length,o=0;r<t;r++)o+=e(n.charCodeAt(r));return o}});
+},{}],61:[function(require,module,exports){
 // Returns a wrapper function that returns a wrapped callback
 // The wrapper function should do some stuff, and return a
 // presumably different callback function.
@@ -17358,7 +17418,7 @@ function wrappy (fn, cb) {
   }
 }
 
-},{}],59:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
