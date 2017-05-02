@@ -62,3 +62,33 @@ tape("markdown: リンク（何もしない）", function(t){
   let expected = `詳しくは、こちらを参照して下さい\n`
   t.equals(convert(input), expected)
 })
+
+tape("markdown: リスト内リンク（何もしない）", function(t){
+  t.plan(1)
+  let input = `
+- 詳しくは、[こちら](http://example.com)を参照して下さい
+- こっちは普通のリスト`
+  let expected = `　・詳しくは、こちらを参照して下さい\n　・こっちは普通のリスト\n`
+  t.equals(convert(input), expected)
+})
+
+tape("markdown: Image（何もしない）", function(t){
+  t.plan(1)
+  let input = `![Alt](test.jpg)`
+  let expected = `\n`
+  t.equals(convert(input), expected)
+})
+
+tape("markdown: コードブロック（何もしない）", function(t){
+  t.plan(1)
+  let input = "```\nfunction hello(){\n  foo();\n}\n```"
+  let expected = `function hello(){\n  foo();\n}\n`
+  t.equals(convert(input), expected)
+})
+
+tape("markdown: HTML（何もしない）", function(t){
+  t.plan(1)
+  let input = '<script>alert("I am XSS!")</script>'
+  let expected = `<script>alert("I am XSS!")</script>\n`
+  t.equals(convert(input), expected)
+})
