@@ -9,7 +9,7 @@
     "dev": "watchify index.js -o bundle.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "browserify": "^14.3.0",
     "markdown-to-ast": "^3.4.0",
