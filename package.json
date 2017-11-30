@@ -12,7 +12,7 @@
   "license": "MIT",
   "devDependencies": {
     "browserify": "^14.3.0",
-    "markdown-to-ast": "^3.4.0",
+    "markdown-to-ast": "^5.0.0",
     "tape": "^4.6.3",
     "txt-ast-traverse": "^1.2.1",
     "watchify": "^3.9.0",
