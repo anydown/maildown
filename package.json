@@ -12,7 +12,7 @@
   "license": "MIT",
   "devDependencies": {
     "browserify": "^14.3.0",
-    "markdown-to-ast": "^3.4.0",
+    "markdown-to-ast": "^5.0.0",
     "tape": "^4.6.3",
     "txt-ast-traverse": "^1.2.1",
     "watchify": "^3.9.0",
@@ -23,17 +23,17 @@
     "textlint-rule-ja-no-redundant-expression": "^1.0.3",
     "textlint-rule-ja-no-weak-phrase": "^1.0.3",
     "textlint-rule-ja-unnatural-alphabet": "^1.3.0",
-    "textlint-rule-max-ten": "^1.2.2",
+    "textlint-rule-max-ten": "^2.0.3",
     "textlint-rule-no-doubled-conjunction": "^1.0.2",
     "textlint-rule-no-doubled-joshi": "^3.5.1",
     "textlint-rule-no-dropping-the-ra": "^1.1.2",
-    "textlint-rule-no-mix-dearu-desumasu": "^1.4.0",
+    "textlint-rule-no-mix-dearu-desumasu": "^3.0.3",
     "textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet": "^1.0.1",
-    "textlint-rule-no-todo": "^1.0.3",
-    "textlint-rule-preset-japanese": "^1.3.4",
-    "textlint-rule-spellcheck-tech-word": "^4.1.0"
+    "textlint-rule-no-todo": "^2.0.0",
+    "textlint-rule-preset-japanese": "^2.0.0",
+    "textlint-rule-spellcheck-tech-word": "^5.0.0"
   },
   "dependencies": {
-    "textlint": "7.4.0"
+    "textlint": "9.1.1"
   }
 }
