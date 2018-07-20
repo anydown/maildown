@@ -1,39 +1,45 @@
-var $input = document.querySelector("#input")
-var $output = document.querySelector("#output")
-var $warning = document.querySelector("#warning")
-var convert = require("./lib/convert")
+var $input = document.querySelector("#input");
+var $output = document.querySelector("#output");
+var $warning = document.querySelector("#warning");
+var convert = require("./lib/convert");
 
-$input.value = require("./example")
+$input.value = require("./example");
 
-var textlint = require("textlint").textlint;
-//ブラウザ上でエラーが出るものはコメントアウト（使いたいのもあるけど・・・）
-textlint.setupRules({
-  "no-todo": require("textlint-rule-no-todo"),
-  "max-ten": require("textlint-rule-max-ten"),
-//    "no-doubled-conjunctive-particle-ga": require("textlint-rule-no-doubled-conjunctive-particle-ga"),
-  "no-mix-dearu-desumasu": require("textlint-rule-no-mix-dearu-desumasu"),
-  "no-nfd": require("textlint-rule-no-nfd"),
-//    "no-double-negative-ja": require("textlint-rule-no-double-negative-ja"),
-//    "no-doubled-joshi": require("textlint-rule-no-doubled-joshi"),
-  "sentence-length": require("textlint-rule-sentence-length"),
-  "spellcheck-tech-word": require("textlint-rule-spellcheck-tech-word"),
-  "date-weekday-mismatch": require("textlint-rule-date-weekday-mismatch"),
-//    "ja-no-weak-phrase": require("textlint-rule-ja-no-weak-phrase"),
-//    "ja-no-redundant-expression": require("textlint-rule-ja-no-redundant-expression"),
-  "no-mixed-zenkaku-and-hankaku-alphabet": require("textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet"),
-//    "no-dropping-the-ra": require("textlint-rule-no-dropping-the-ra"),
-//    "no-doubled-conjunction": require("textlint-rule-no-doubled-conjunction"),
-  "ja-no-mixed-period": require("textlint-rule-ja-no-mixed-period"),
-  "ja-unnatural-alphabet": require("textlint-rule-ja-unnatural-alphabet"),
-});
+var TextlintKernel = require("@textlint/kernel").TextlintKernel;
+var textlint = new TextlintKernel();
+var textlintOption = {
+  //ブラウザ上でエラーが出るものはコメントアウト（使いたいのもあるけど・・・）
+  rules: [
+    {ruleId: "textlint-rule-no-todo", rule: require("textlint-rule-no-todo")},
+    {ruleId: "max-ten", rule: require("textlint-rule-max-ten")},
+    // {ruleId: "no-doubled-conjunctive-particle-ga", rule: require("textlint-rule-no-doubled-conjunctive-particle-ga")},
+    {ruleId: "no-mix-dearu-desumasu", rule: require("textlint-rule-no-mix-dearu-desumasu")},
+    {ruleId: "no-nfd", rule: require("textlint-rule-no-nfd")},
+    // {ruleId: "no-double-negative-ja", rule: require("textlint-rule-no-double-negative-ja")},
+    // {ruleId: no-doubled-joshi, rule: require("textlint-rule-no-doubled-joshi")},
+    {ruleId: "sentence-length", rule: require("textlint-rule-sentence-length")},
+    {ruleId: "spellcheck-tech-word", rule: require("textlint-rule-spellcheck-tech-word")},
+    {ruleId: "date-weekday-mismatch", rule: require("textlint-rule-date-weekday-mismatch")},
+    // {ruleId: "ja-no-weak-phrase", rule: require("textlint-rule-ja-no-weak-phrase")},
+    // {ruleId: "ja-no-redundant-expression", rule: require("textlint-rule-ja-no-redundant-expression")},
+    {ruleId: "no-mixed-zenkaku-and-hankaku-alphabet", rule: require("textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet")},
+    // {ruleId: "no-dropping-the-ra", rule: require("textlint-rule-no-dropping-the-ra")},
+    // {ruleId: "no-doubled-conjunction", rule: require("textlint-rule-no-doubled-conjunction")},
+    {ruleId: "ja-no-mixed-period", rule: require("textlint-rule-ja-no-mixed-period")},
+    {ruleId: "ja-unnatural-alphabet", rule: require("textlint-rule-ja-unnatural-alphabet")},
+  ],
+  plugins: [
+    {pluginId: "markdown", plugin: require("textlint-plugin-markdown")}
+  ],
+  ext: ".md",
+};
 
 setInterval(function () {
   $output.value = convert($input.value)
 
-  textlint.lintMarkdown($input.value).then((result) => {
-    var html = result.messages.map(output=>`<div class="warning__line">${output.line}: ${output.column} ${output.message}</div>`).join("")
-    $warning.innerHTML = html
+  textlint.lintText($input.value, textlintOption).then((result) => {
+    var html = result.messages.map(output=>`<div class="warning__line">${output.line}: ${output.column} ${output.message}</div>`).join("");
+    $warning.innerHTML = html;
     this.outputs = result.messages;
   })
-}, 1000)
-
+}, 1000);
