@@ -59,7 +59,7 @@ module.exports = example
 var $input = document.querySelector("#input");
 var $output = document.querySelector("#output");
 var $warning = document.querySelector("#warning");
-var convert = require("./lib/convert");
+var convert = require("../lib/convert");
 
 $input.value = require("./example");
 
@@ -68,41 +68,69 @@ var textlint = new TextlintKernel();
 var textlintOption = {
   //ブラウザ上でエラーが出るものはコメントアウト（使いたいのもあるけど・・・）
   rules: [
-    {ruleId: "textlint-rule-no-todo", rule: require("textlint-rule-no-todo")},
-    {ruleId: "max-ten", rule: require("textlint-rule-max-ten")},
+    { ruleId: "textlint-rule-no-todo", rule: require("textlint-rule-no-todo") },
+    { ruleId: "max-ten", rule: require("textlint-rule-max-ten") },
     // {ruleId: "no-doubled-conjunctive-particle-ga", rule: require("textlint-rule-no-doubled-conjunctive-particle-ga")},
-    {ruleId: "no-mix-dearu-desumasu", rule: require("textlint-rule-no-mix-dearu-desumasu")},
-    {ruleId: "no-nfd", rule: require("textlint-rule-no-nfd")},
+    {
+      ruleId: "no-mix-dearu-desumasu",
+      rule: require("textlint-rule-no-mix-dearu-desumasu")
+    },
+    { ruleId: "no-nfd", rule: require("textlint-rule-no-nfd") },
     // {ruleId: "no-double-negative-ja", rule: require("textlint-rule-no-double-negative-ja")},
     // {ruleId: no-doubled-joshi, rule: require("textlint-rule-no-doubled-joshi")},
-    {ruleId: "sentence-length", rule: require("textlint-rule-sentence-length")},
-    {ruleId: "spellcheck-tech-word", rule: require("textlint-rule-spellcheck-tech-word")},
-    {ruleId: "date-weekday-mismatch", rule: require("textlint-rule-date-weekday-mismatch")},
+    {
+      ruleId: "sentence-length",
+      rule: require("textlint-rule-sentence-length")
+    },
+    {
+      ruleId: "spellcheck-tech-word",
+      rule: require("textlint-rule-spellcheck-tech-word")
+    },
+    {
+      ruleId: "date-weekday-mismatch",
+      rule: require("textlint-rule-date-weekday-mismatch")
+    },
     // {ruleId: "ja-no-weak-phrase", rule: require("textlint-rule-ja-no-weak-phrase")},
     // {ruleId: "ja-no-redundant-expression", rule: require("textlint-rule-ja-no-redundant-expression")},
-    {ruleId: "no-mixed-zenkaku-and-hankaku-alphabet", rule: require("textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet")},
+    {
+      ruleId: "no-mixed-zenkaku-and-hankaku-alphabet",
+      rule: require("textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet")
+    },
     // {ruleId: "no-dropping-the-ra", rule: require("textlint-rule-no-dropping-the-ra")},
     // {ruleId: "no-doubled-conjunction", rule: require("textlint-rule-no-doubled-conjunction")},
-    {ruleId: "ja-no-mixed-period", rule: require("textlint-rule-ja-no-mixed-period")},
-    {ruleId: "ja-unnatural-alphabet", rule: require("textlint-rule-ja-unnatural-alphabet")},
+    {
+      ruleId: "ja-no-mixed-period",
+      rule: require("textlint-rule-ja-no-mixed-period")
+    },
+    {
+      ruleId: "ja-unnatural-alphabet",
+      rule: require("textlint-rule-ja-unnatural-alphabet")
+    }
   ],
   plugins: [
-    {pluginId: "markdown", plugin: require("textlint-plugin-markdown")}
+    { pluginId: "markdown", plugin: require("textlint-plugin-markdown") }
   ],
-  ext: ".md",
+  ext: ".md"
 };
 
-setInterval(function () {
-  $output.value = convert($input.value)
+setInterval(function() {
+  $output.value = convert($input.value);
 
-  textlint.lintText($input.value, textlintOption).then((result) => {
-    var html = result.messages.map(output=>`<div class="warning__line">${output.line}: ${output.column} ${output.message}</div>`).join("");
+  textlint.lintText($input.value, textlintOption).then(result => {
+    var html = result.messages
+      .map(
+        output =>
+          `<div class="warning__line">${output.line}: ${output.column} ${
+            output.message
+          }</div>`
+      )
+      .join("");
     $warning.innerHTML = html;
     this.outputs = result.messages;
-  })
+  });
 }, 1000);
 
-},{"./example":1,"./lib/convert":3,"@textlint/kernel":18,"textlint-plugin-markdown":248,"textlint-rule-date-weekday-mismatch":249,"textlint-rule-ja-no-mixed-period":253,"textlint-rule-ja-unnatural-alphabet":257,"textlint-rule-max-ten":258,"textlint-rule-no-mix-dearu-desumasu":259,"textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet":260,"textlint-rule-no-nfd":264,"textlint-rule-no-todo":265,"textlint-rule-sentence-length":266,"textlint-rule-spellcheck-tech-word":270}],3:[function(require,module,exports){
+},{"../lib/convert":3,"./example":1,"@textlint/kernel":18,"textlint-plugin-markdown":247,"textlint-rule-date-weekday-mismatch":248,"textlint-rule-ja-no-mixed-period":252,"textlint-rule-ja-unnatural-alphabet":256,"textlint-rule-max-ten":257,"textlint-rule-no-mix-dearu-desumasu":258,"textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet":259,"textlint-rule-no-nfd":263,"textlint-rule-no-todo":264,"textlint-rule-sentence-length":265,"textlint-rule-spellcheck-tech-word":269}],3:[function(require,module,exports){
 var kaigyo = require("./kaigyo");
 var parse = require("@textlint/markdown-to-ast").parse;
 var Syntax = require("@textlint/markdown-to-ast").Syntax;
@@ -110,16 +138,15 @@ var traverse = require("@textlint/ast-traverse").traverse;
 var VisitorOption = require("@textlint/ast-traverse").VisitorOption;
 var WordTable = require("word-table");
 
-
 function nodeToString(node) {
   var output = "";
   if (node.value) {
     output += node.value;
   }
   if (node.children) {
-    node.children.forEach((leaf) => {
+    node.children.forEach(leaf => {
       output += nodeToString(leaf);
-    })
+    });
   }
   return output;
 }
@@ -128,8 +155,13 @@ function nodeToString(node) {
  * convert AST to plaintext
  * @param {*} AST
  */
-function convert(input) {
+function convert(input, opts) {
   var output = [];
+  opts = opts || {};
+
+  //Default options
+  var lineLength = opts.lineLength ? opts.lineLength : 70;
+
   var AST = parse(input);
   var tempTable = [];
   var tempTableRow = [];
@@ -141,7 +173,7 @@ function convert(input) {
         case Syntax.Document:
           break;
         case Syntax.Paragraph:
-          output.push(kaigyo(nodeToString(node)));
+          output.push(kaigyo(nodeToString(node), lineLength));
           output.push("");
           return VisitorOption.Skip;
 
@@ -157,25 +189,30 @@ function convert(input) {
         case Syntax.List:
           var toText = item => item.value;
           if (node.ordered) {
-            var toItem = (listitem, i) => "　（" + (i + 1) + "）" + nodeToString(listitem) + "\n"
-            var listtext = node.children.map(toItem).join("")
-            output.push(listtext)
+            var toItem = (listitem, i) =>
+              "　（" + (i + 1) + "）" + nodeToString(listitem) + "\n";
+            var listtext = node.children.map(toItem).join("");
+            output.push(listtext);
           } else {
-            var toItem = listitem => "　・" + nodeToString(listitem) + "\n"
-            var listtext = node.children.map(toItem).join("")
-            output.push(listtext)
+            var toItem = listitem => "　・" + nodeToString(listitem) + "\n";
+            var listtext = node.children.map(toItem).join("");
+            output.push(listtext);
           }
           return VisitorOption.Skip;
 
         case Syntax.Header:
-          output.push("")
+          output.push("");
           if (node.depth === 1) {
-            output.push("【" + node.children.map(item => item.value).join("") + "】");
+            output.push(
+              "【" + node.children.map(item => item.value).join("") + "】"
+            );
           }
           if (node.depth >= 2) {
-            output.push("■" + node.children.map(item => item.value).join("") + "");
+            output.push(
+              "■" + node.children.map(item => item.value).join("") + ""
+            );
           }
-          output.push("")
+          output.push("");
           return VisitorOption.Skip;
 
         case Syntax.CodeBlock:
@@ -231,16 +268,15 @@ function convert(input) {
     leave(node) {
       switch (node.type) {
         case "Table":
-          var wt = new WordTable(tempTable[0],tempTable.slice(1));
+          var wt = new WordTable(tempTable[0], tempTable.slice(1));
           output.push(wt.string());
           output.push("");
-          
+
         case "TableRow":
           tempTable.push(tempTableRow);
           tempTableRow = [];
         default:
           break;
-
       }
     }
   });
@@ -254,12 +290,12 @@ var TinySegmenter = require("./tiny_segmenter");
 
 /**
  * Get string length, count full width char as 2
- * @param {string} str 
+ * @param {string} str
  */
 function charcount(str) {
   len = 0;
   str = escape(str);
-  for (i=0;i<str.length;i++,len++) {
+  for (i = 0; i < str.length; i++, len++) {
     if (str.charAt(i) == "%") {
       if (str.charAt(++i) == "u") {
         i += 3;
@@ -272,28 +308,28 @@ function charcount(str) {
 }
 
 /**
- * Split a string when line length > 70
- * @param {string} input 
+ * Split a string when line length > length
+ * @param {string} input
  */
-function kaigyo(input){
+function kaigyo(input, maxLen) {
   var tinySegmenter = new TinySegmenter();
   var segs = tinySegmenter.segment(input);
-  
+
   var result = "";
-  var lineLength = 0;
-  segs.forEach((segment)=>{
+  var lengthCount = 0;
+  segs.forEach(segment => {
     var isKinsoku = "、。．，,.".indexOf(segment) >= 0;
     var segmentSize = charcount(segment);
-    if(segment.indexOf("\n") >= 0){
-      lineLength = 0;
+    if (segment.indexOf("\n") >= 0) {
+      lengthCount = 0;
     }
-    if(segmentSize + lineLength > 70 && !isKinsoku){
+    if (segmentSize + lengthCount > maxLen && !isKinsoku) {
       result += "\n";
-      lineLength = segmentSize;
+      lengthCount = segmentSize;
     }
     result += segment;
-    lineLength += segmentSize;
-  })
+    lengthCount += segmentSize;
+  });
   return result;
 }
 
@@ -789,7 +825,7 @@ function throwIfTesting(message) {
 }
 
 }).call(this,require('_process'))
-},{"_process":180,"assert":48,"map-like":164}],9:[function(require,module,exports){
+},{"_process":179,"assert":48,"map-like":163}],9:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -1295,7 +1331,7 @@ var SourceCode = /** @class */ (function () {
 }());
 exports.default = SourceCode;
 
-},{"@textlint/ast-node-types":6,"assert":48,"structured-source":244}],14:[function(require,module,exports){
+},{"@textlint/ast-node-types":6,"assert":48,"structured-source":243}],14:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -1452,7 +1488,7 @@ var SourceLocation = /** @class */ (function () {
 }());
 exports.default = SourceLocation;
 
-},{"@textlint/feature-flag":8,"assert":48,"object-assign":175}],15:[function(require,module,exports){
+},{"@textlint/feature-flag":8,"assert":48,"object-assign":174}],15:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2359,7 +2395,7 @@ var PromiseEventEmitter = /** @class */ (function () {
 }());
 exports.PromiseEventEmitter = PromiseEventEmitter;
 
-},{"bluebird":37,"events":143}],31:[function(require,module,exports){
+},{"bluebird":37,"events":285}],31:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2584,7 +2620,7 @@ var TextLintCoreTask = /** @class */ (function (_super) {
 }(events_1.EventEmitter));
 exports.default = TextLintCoreTask;
 
-},{"../core/rule-context":10,"../core/rule-error":12,"../core/source-location":14,"../shared/type/MessageType":26,"../util/timing":36,"./promise-event-emitter":30,"@textlint/ast-traverse":7,"assert":48,"bluebird":37,"debug":38,"events":143}],33:[function(require,module,exports){
+},{"../core/rule-context":10,"../core/rule-error":12,"../core/source-location":14,"../shared/type/MessageType":26,"../util/timing":36,"./promise-event-emitter":30,"@textlint/ast-traverse":7,"assert":48,"bluebird":37,"debug":38,"events":285}],33:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // "range" will be replaced by "text"
@@ -2969,7 +3005,7 @@ exports.default = (function () {
 })();
 
 }).call(this,require('_process'))
-},{"./logger":35,"_process":180}],37:[function(require,module,exports){
+},{"./logger":35,"_process":179}],37:[function(require,module,exports){
 (function (process,global,setImmediate){
 /* @preserve
  * The MIT License (MIT)
@@ -8595,7 +8631,7 @@ module.exports = ret;
 },{"./es5":13}]},{},[4])(4)
 });                    ;if (typeof window !== 'undefined' && window !== null) {                               window.P = window.Promise;                                                     } else if (typeof self !== 'undefined' && self !== null) {                             self.P = self.Promise;                                                         }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("timers").setImmediate)
-},{"_process":180,"timers":271}],38:[function(require,module,exports){
+},{"_process":179,"timers":270}],38:[function(require,module,exports){
 (function (process){
 /**
  * This is the web browser implementation of `debug()`.
@@ -8784,7 +8820,7 @@ function localstorage() {
 }
 
 }).call(this,require('_process'))
-},{"./debug":39,"_process":180}],39:[function(require,module,exports){
+},{"./debug":39,"_process":179}],39:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -9246,7 +9282,7 @@ module.exports = {
     Syntax: ASTNodeTypes
 };
 
-},{"./mapping/markdown-syntax-map":41,"@textlint/ast-node-types":6,"debug":126,"remark-frontmatter":186,"remark-parse":191,"structured-source":244,"traverse":272,"unified":277}],43:[function(require,module,exports){
+},{"./mapping/markdown-syntax-map":41,"@textlint/ast-node-types":6,"debug":126,"remark-frontmatter":185,"remark-parse":190,"structured-source":243,"traverse":271,"unified":276}],43:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 // This RegExp are based of https://github.com/recruit-tech/redpen/blob/master/redpen-core/src/main/java/cc/redpen/validator/sentence/JapaneseStyleValidator.java
@@ -10541,7 +10577,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":50,"_process":180,"inherits":49}],52:[function(require,module,exports){
+},{"./support/isBuffer":50,"_process":179,"inherits":49}],52:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -13551,7 +13587,7 @@ exports.Parser = function DECasualDateParser() {
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],61:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],61:[function(require,module,exports){
 /*
 
 
@@ -13651,7 +13687,7 @@ exports.Parser = function DEDeadlineFormatParser(){
     };
 };
 
-},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":173}],62:[function(require,module,exports){
+},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":172}],62:[function(require,module,exports){
 /*
 
 
@@ -13763,7 +13799,7 @@ exports.Parser = function DEMonthNameLittleEndianParser(){
     };
 }
 
-},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":173}],63:[function(require,module,exports){
+},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":172}],63:[function(require,module,exports){
 /*
     
     The parser for parsing month name and year.
@@ -13859,7 +13895,7 @@ exports.Parser = function ENMonthNameParser(){
 }
 
 
-},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":173}],64:[function(require,module,exports){
+},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":172}],64:[function(require,module,exports){
 /*
     Date format with slash "/" (also "-" and ".") between numbers
     - Tuesday 11/3/2015
@@ -13968,7 +14004,7 @@ exports.Parser = function DESlashDateFormatParser(argument) {
     };
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],65:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],65:[function(require,module,exports){
 /*
 
 
@@ -14082,7 +14118,7 @@ exports.Parser = function DETimeAgoFormatParser(){
     };
 }
 
-},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":173}],66:[function(require,module,exports){
+},{"../../result":118,"../../utils/DE":119,"../parser":103,"moment":172}],66:[function(require,module,exports){
 /*
 
 
@@ -14336,7 +14372,7 @@ exports.Parser = function DETimeExpressionParser() {
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],67:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],67:[function(require,module,exports){
 /*
 
 
@@ -14424,7 +14460,7 @@ exports.Parser = function DEWeekdayParser() {
     }
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],68:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],68:[function(require,module,exports){
 /*
 
 
@@ -14496,7 +14532,7 @@ exports.Parser = function ENCasualDateParser(){
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],69:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],69:[function(require,module,exports){
 /*
 
 
@@ -14551,7 +14587,7 @@ exports.Parser = function ENCasualTimeParser(){
     };
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],70:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],70:[function(require,module,exports){
 /*
 
 
@@ -14651,7 +14687,7 @@ exports.Parser = function ENDeadlineFormatParser(){
     };
 };
 
-},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":173}],71:[function(require,module,exports){
+},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":172}],71:[function(require,module,exports){
 /*
     ISO 8601
     http://www.w3.org/TR/NOTE-datetime
@@ -14756,7 +14792,7 @@ exports.Parser = function ENISOFormatParser(){
 }
 
 
-},{"../../result":118,"../parser":103,"moment":173}],72:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],72:[function(require,module,exports){
 /*
 
 
@@ -14887,7 +14923,7 @@ exports.Parser = function ENMonthNameLittleEndianParser(){
     };
 };
 
-},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":173}],73:[function(require,module,exports){
+},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":172}],73:[function(require,module,exports){
 /*
 
     The parser for parsing US's date format that begin with month's name.
@@ -15024,7 +15060,7 @@ exports.Parser = function ENMonthNameMiddleEndianParser(){
         return result;
     }
 };
-},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":173}],74:[function(require,module,exports){
+},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":172}],74:[function(require,module,exports){
 /*
     
     The parser for parsing month name and year.
@@ -15121,7 +15157,7 @@ exports.Parser = function ENMonthNameParser(){
     }
 }
 
-},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":173}],75:[function(require,module,exports){
+},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":172}],75:[function(require,module,exports){
 /*
 
 
@@ -15236,7 +15272,7 @@ exports.Parser = function ENRelativeDateFormatParser(){
     };
 };
 
-},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":173}],76:[function(require,module,exports){
+},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":172}],76:[function(require,module,exports){
 /*
     Date format with slash "/" (also "-" and ".") between numbers
     - Tuesday 11/3/2015
@@ -15352,7 +15388,7 @@ exports.Parser = function ENSlashDateFormatParser(argument) {
     };
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],77:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],77:[function(require,module,exports){
 /*
     Date format with slash "/" between numbers like ENSlashDateFormatParser,
     but this parser expect year before month and date. 
@@ -15402,7 +15438,7 @@ exports.Parser = function ENSlashDateFormatStartWithYearParser(){
     };
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],78:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],78:[function(require,module,exports){
 /*
     Month/Year date format with slash "/" (also "-" and ".") between numbers 
     - 11/05
@@ -15454,7 +15490,7 @@ exports.Parser = function ENSlashMonthFormatParser(argument) {
     };
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],79:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],79:[function(require,module,exports){
 /*
 
 
@@ -15570,7 +15606,7 @@ exports.Parser = function ENTimeAgoFormatParser(){
     };
 }
 
-},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":173}],80:[function(require,module,exports){
+},{"../../result":118,"../../utils/EN":120,"../parser":103,"moment":172}],80:[function(require,module,exports){
 /*
 
 
@@ -15827,7 +15863,7 @@ exports.Parser = function ENTimeExpressionParser(){
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],81:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],81:[function(require,module,exports){
 /*
 
 
@@ -15925,7 +15961,7 @@ exports.Parser = function ENWeekdayParser() {
     }
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],82:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],82:[function(require,module,exports){
 /*
 
 
@@ -16056,7 +16092,7 @@ exports.Parser = function ESCasualDateParser(){
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],83:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],83:[function(require,module,exports){
 /*
 
 
@@ -16124,7 +16160,7 @@ exports.Parser = function ESDeadlineFormatParser(){
     };
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],84:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],84:[function(require,module,exports){
 /*
 
 
@@ -16233,7 +16269,7 @@ exports.Parser = function ESMonthNameLittleEndianParser(){
         return result;
     };
 }
-},{"../../result":118,"../../utils/ES":121,"../parser":103,"moment":173}],85:[function(require,module,exports){
+},{"../../result":118,"../../utils/ES":121,"../parser":103,"moment":172}],85:[function(require,module,exports){
 /*
     Date format with slash "/" (also "-" and ".") between numbers
     - Martes 3/11/2015
@@ -16348,7 +16384,7 @@ exports.Parser = function ESSlashDateFormatParser(argument) {
         return result;
     };
 };
-},{"../../result":118,"../parser":103,"moment":173}],86:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],86:[function(require,module,exports){
 /*
 
 
@@ -16442,7 +16478,7 @@ exports.Parser = function ESTimeAgoFormatParser(){
     };
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],87:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],87:[function(require,module,exports){
 /*
 
 
@@ -16683,7 +16719,7 @@ exports.Parser = function ESTimeExpressionParser(){
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],88:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],88:[function(require,module,exports){
 /*
 
 
@@ -16750,7 +16786,7 @@ exports.Parser = function ESWeekdayParser() {
     }
 }
 
-},{"../../result":118,"../EN/ENWeekdayParser":81,"../parser":103,"moment":173}],89:[function(require,module,exports){
+},{"../../result":118,"../EN/ENWeekdayParser":81,"../parser":103,"moment":172}],89:[function(require,module,exports){
 /*
 
 
@@ -16834,7 +16870,7 @@ exports.Parser = function FRCasualDateParser(){
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],90:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],90:[function(require,module,exports){
 /*
 
 
@@ -16934,7 +16970,7 @@ exports.Parser = function FRDeadlineFormatParser(){
     };
 };
 
-},{"../../result":118,"../../utils/FR":122,"../parser":103,"moment":173}],91:[function(require,module,exports){
+},{"../../result":118,"../../utils/FR":122,"../parser":103,"moment":172}],91:[function(require,module,exports){
 /*
 
 
@@ -17044,7 +17080,7 @@ exports.Parser = function FRMonthNameLittleEndianParser(){
     };
 }
 
-},{"../../result":118,"../../utils/FR":122,"../parser":103,"moment":173}],92:[function(require,module,exports){
+},{"../../result":118,"../../utils/FR":122,"../parser":103,"moment":172}],92:[function(require,module,exports){
 /*
     Date format with slash "/" (also "-" and ".") between numbers
     - Martes 3/11/2015
@@ -17158,7 +17194,7 @@ exports.Parser = function FRSlashDateFormatParser(argument) {
         return result;
     };
 };
-},{"../../result":118,"../parser":103,"moment":173}],93:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],93:[function(require,module,exports){
 /*
 
 
@@ -17253,7 +17289,7 @@ exports.Parser = function FRTimeAgoFormatParser(){
     };
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],94:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],94:[function(require,module,exports){
 /*
 
 
@@ -17494,7 +17530,7 @@ exports.Parser = function FRTimeExpressionParser(){
     }
 }
 
-},{"../../result":118,"../parser":103,"moment":173}],95:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],95:[function(require,module,exports){
 /*
 
 
@@ -17560,7 +17596,7 @@ exports.Parser = function FRWeekdayParser() {
 };
 
 
-},{"../../result":118,"../EN/ENWeekdayParser":81,"../parser":103,"moment":173}],96:[function(require,module,exports){
+},{"../../result":118,"../EN/ENWeekdayParser":81,"../parser":103,"moment":172}],96:[function(require,module,exports){
 /*
     
     
@@ -17622,7 +17658,7 @@ exports.Parser = function JPCasualDateParser(){
 }
 
 
-},{"../../result":118,"../parser":103,"moment":173}],97:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],97:[function(require,module,exports){
 /*
     
     
@@ -17712,7 +17748,7 @@ exports.Parser = function JPStandardParser(){
 }
 
 
-},{"../../result":118,"../../utils/JP":123,"../parser":103,"moment":173}],98:[function(require,module,exports){
+},{"../../result":118,"../../utils/JP":123,"../parser":103,"moment":172}],98:[function(require,module,exports){
 /*
 
 
@@ -17841,7 +17877,7 @@ exports.Parser = function ZHHantCasualDateParser() {
     };
 };
 
-},{"../../result":118,"../parser":103,"moment":173}],99:[function(require,module,exports){
+},{"../../result":118,"../parser":103,"moment":172}],99:[function(require,module,exports){
 /*
 
 
@@ -17915,7 +17951,7 @@ exports.Parser = function ZHHantDateParser() {
     };
 };
 
-},{"../../result":118,"../../utils/ZH-Hant.js":124,"../parser":103,"moment":173}],100:[function(require,module,exports){
+},{"../../result":118,"../../utils/ZH-Hant.js":124,"../parser":103,"moment":172}],100:[function(require,module,exports){
 /*
 
 
@@ -18013,7 +18049,7 @@ exports.Parser = function ZHHantCasualDateParser() {
     };
 };
 
-},{"../../result":118,"../../utils/ZH-Hant.js":124,"../parser":103,"moment":173}],101:[function(require,module,exports){
+},{"../../result":118,"../../utils/ZH-Hant.js":124,"../parser":103,"moment":172}],101:[function(require,module,exports){
 /*
 
 
@@ -18410,7 +18446,7 @@ exports.Parser = function ZHHantTimeExpressionParser() {
     };
 };
 
-},{"../../result":118,"../../utils/ZH-Hant.js":124,"../parser":103,"moment":173}],102:[function(require,module,exports){
+},{"../../result":118,"../../utils/ZH-Hant.js":124,"../parser":103,"moment":172}],102:[function(require,module,exports){
 /*
 
 
@@ -18471,7 +18507,7 @@ exports.Parser = function ZHHantWeekdayParser() {
     };
 };
 
-},{"../../result":118,"../../utils/ZH-Hant.js":124,"../EN/ENWeekdayParser":81,"../parser":103,"moment":173}],103:[function(require,module,exports){
+},{"../../result":118,"../../utils/ZH-Hant.js":124,"../EN/ENWeekdayParser":81,"../parser":103,"moment":172}],103:[function(require,module,exports){
 
 function Parser(strictMode) {
 
@@ -19465,7 +19501,7 @@ exports.Refiner = function ForwardDateRefiner() {
     }
 };
 
-},{"./refiner":117,"moment":173}],114:[function(require,module,exports){
+},{"./refiner":117,"moment":172}],114:[function(require,module,exports){
 /*
   
 */
@@ -19719,7 +19755,7 @@ ParsedComponents.prototype.moment = function() {
 exports.ParsedComponents = ParsedComponents;
 exports.ParsedResult = ParsedResult;
 
-},{"moment":173}],119:[function(require,module,exports){
+},{"moment":172}],119:[function(require,module,exports){
 exports.WEEKDAY_OFFSET = { 
     'sonntag': 0, 
     'so': 0, 
@@ -20337,9 +20373,9 @@ function localstorage() {
 }
 
 }).call(this,require('_process'))
-},{"./debug":127,"_process":180}],127:[function(require,module,exports){
+},{"./debug":127,"_process":179}],127:[function(require,module,exports){
 arguments[4][39][0].apply(exports,arguments)
-},{"dup":39,"ms":174}],128:[function(require,module,exports){
+},{"dup":39,"ms":173}],128:[function(require,module,exports){
 'use strict';
 
 var keys = require('object-keys');
@@ -20397,7 +20433,7 @@ defineProperties.supportsDescriptors = !!supportsDescriptors;
 
 module.exports = defineProperties;
 
-},{"foreach":146,"object-keys":176}],129:[function(require,module,exports){
+},{"foreach":145,"object-keys":175}],129:[function(require,module,exports){
 "use strict";
 
 module.exports = function () {
@@ -20516,7 +20552,7 @@ var ES5 = {
 
 module.exports = ES5;
 
-},{"./helpers/isFinite":134,"./helpers/isNaN":135,"./helpers/mod":137,"./helpers/sign":138,"es-to-primitive/es5":139,"is-callable":155}],132:[function(require,module,exports){
+},{"./helpers/isFinite":134,"./helpers/isNaN":135,"./helpers/mod":137,"./helpers/sign":138,"es-to-primitive/es5":139,"is-callable":154}],132:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -20850,7 +20886,7 @@ delete ES6.CheckObjectCoercible; // renamed in ES6 to RequireObjectCoercible
 
 module.exports = ES6;
 
-},{"./es5":131,"./helpers/assign":133,"./helpers/isFinite":134,"./helpers/isNaN":135,"./helpers/isPrimitive":136,"./helpers/mod":137,"./helpers/sign":138,"es-to-primitive/es6":140,"function-bind":149,"is-regex":160}],133:[function(require,module,exports){
+},{"./es5":131,"./helpers/assign":133,"./helpers/isFinite":134,"./helpers/isNaN":135,"./helpers/isPrimitive":136,"./helpers/mod":137,"./helpers/sign":138,"es-to-primitive/es6":140,"function-bind":148,"is-regex":159}],133:[function(require,module,exports){
 var has = Object.prototype.hasOwnProperty;
 module.exports = Object.assign || function assign(target, source) {
 	for (var key in source) {
@@ -20926,7 +20962,7 @@ module.exports = function ToPrimitive(input, PreferredType) {
 	return ES5internalSlots['[[DefaultValue]]'](input, PreferredType);
 };
 
-},{"./helpers/isPrimitive":141,"is-callable":155}],140:[function(require,module,exports){
+},{"./helpers/isPrimitive":141,"is-callable":154}],140:[function(require,module,exports){
 'use strict';
 
 var hasSymbols = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol';
@@ -21002,7 +21038,7 @@ module.exports = function ToPrimitive(input, PreferredType) {
 	return ordinaryToPrimitive(input, hint === 'default' ? 'number' : hint);
 };
 
-},{"./helpers/isPrimitive":141,"is-callable":155,"is-date-object":156,"is-symbol":161}],141:[function(require,module,exports){
+},{"./helpers/isPrimitive":141,"is-callable":154,"is-date-object":155,"is-symbol":160}],141:[function(require,module,exports){
 arguments[4][136][0].apply(exports,arguments)
 },{"dup":136}],142:[function(require,module,exports){
 'use strict';
@@ -21018,310 +21054,6 @@ module.exports = function (str) {
 };
 
 },{}],143:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      } else {
-        // At least give some kind of context to the user
-        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
-        err.context = er;
-        throw err;
-      }
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-},{}],144:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -21409,7 +21141,7 @@ module.exports = function extend() {
 	return target;
 };
 
-},{}],145:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 'use strict'
 
 var formatter = require('format')
@@ -21443,7 +21175,7 @@ function create(EConstructor) {
   }
 }
 
-},{"format":147}],146:[function(require,module,exports){
+},{"format":146}],145:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -21467,7 +21199,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],147:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 //
 // format - printf-like string formatting for JavaScript
 // github.com/samsonjs/format
@@ -21597,7 +21329,7 @@ module.exports = function forEach (obj, fn, ctx) {
 
 }());
 
-},{}],148:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
 var slice = Array.prototype.slice;
 var toStr = Object.prototype.toString;
@@ -21647,19 +21379,19 @@ module.exports = function bind(that) {
     return bound;
 };
 
-},{}],149:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 var implementation = require('./implementation');
 
 module.exports = Function.prototype.bind || implementation;
 
-},{"./implementation":148}],150:[function(require,module,exports){
+},{"./implementation":147}],149:[function(require,module,exports){
 var bind = require('function-bind');
 
 module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
 
-},{"function-bind":149}],151:[function(require,module,exports){
+},{"function-bind":148}],150:[function(require,module,exports){
 arguments[4][49][0].apply(exports,arguments)
-},{"dup":49}],152:[function(require,module,exports){
+},{"dup":49}],151:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -21690,7 +21422,7 @@ function alphabetical(character) {
     (code >= 65 && code <= 90); /* A-Z */
 }
 
-},{}],153:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -21721,7 +21453,7 @@ function alphanumerical(character) {
   return alphabetical(character) || decimal(character);
 }
 
-},{"is-alphabetical":152,"is-decimal":157}],154:[function(require,module,exports){
+},{"is-alphabetical":151,"is-decimal":156}],153:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -21744,7 +21476,7 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],155:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 'use strict';
 
 var fnToStr = Function.prototype.toString;
@@ -21785,7 +21517,7 @@ module.exports = function isCallable(value) {
 	return strClass === fnClass || strClass === genClass;
 };
 
-},{}],156:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 'use strict';
 
 var getDay = Date.prototype.getDay;
@@ -21807,7 +21539,7 @@ module.exports = function isDateObject(value) {
 	return hasToStringTag ? tryDateObject(value) : toStr.call(value) === dateClass;
 };
 
-},{}],157:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -21837,7 +21569,7 @@ function decimal(character) {
   return code >= 48 && code <= 57; /* 0-9 */
 }
 
-},{}],158:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -21869,7 +21601,7 @@ function hexadecimal(character) {
     (code >= 48 /* A */ && code <= 57 /* Z */);
 }
 
-},{}],159:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 'use strict';
 var toString = Object.prototype.toString;
 
@@ -21878,7 +21610,7 @@ module.exports = function (x) {
 	return toString.call(x) === '[object Object]' && (prototype = Object.getPrototypeOf(x), prototype === null || prototype === Object.getPrototypeOf({}));
 };
 
-},{}],160:[function(require,module,exports){
+},{}],159:[function(require,module,exports){
 'use strict';
 
 var has = require('has');
@@ -21919,7 +21651,7 @@ module.exports = function isRegex(value) {
 	return tryRegexExecCall(value);
 };
 
-},{"has":150}],161:[function(require,module,exports){
+},{"has":149}],160:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -21948,7 +21680,7 @@ if (hasSymbols) {
 	};
 }
 
-},{}],162:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 'use strict';
 
 module.exports = whitespace;
@@ -21964,7 +21696,7 @@ function whitespace(character) {
   );
 }
 
-},{}],163:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 'use strict';
 
 module.exports = wordCharacter;
@@ -21980,7 +21712,7 @@ function wordCharacter(character) {
   );
 }
 
-},{}],164:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 // constants
@@ -22189,7 +21921,7 @@ var MapLike = exports.MapLike = function () {
     return MapLike;
 }();
 
-},{}],165:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 'use strict';
 
 module.exports = escapes;
@@ -22248,7 +21980,7 @@ function escapes(options) {
   return settings.gfm ? gfm : defaults;
 }
 
-},{}],166:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -22354,7 +22086,7 @@ function matchAll(text, regExp) {
     return matches;
 }
 
-},{"assert":48,"regexp.prototype.flags":182}],167:[function(require,module,exports){
+},{"assert":48,"regexp.prototype.flags":181}],166:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -22400,7 +22132,7 @@ function toString(node) {
 
 module.exports = toString;
 
-},{}],168:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 'use strict';
 var propIsEnumerable = Object.prototype.propertyIsEnumerable;
 
@@ -22441,7 +22173,7 @@ module.exports = Object.assign || function (target, source) {
 	return to;
 };
 
-},{}],169:[function(require,module,exports){
+},{}],168:[function(require,module,exports){
 "use strict";
 module.exports = {
     'ZE': {start:0xff01, end:0xff5e}, // 全角英数
@@ -22457,7 +22189,7 @@ module.exports = {
     'ZK': {regexp: /([\u3001-\u30fc])/g,  //全角カナ (半角カナ変換用)
         list: ['。', '「', '」', '、', '・', 'ヲ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ャ', 'ュ', 'ョ', 'ッ', 'ー', 'ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク', 'ケ', 'コ', 'サ', 'シ', 'ス', 'セ', 'ソ', 'タ', 'チ', 'ツ', 'テ', 'ト', 'ナ', 'ニ', 'ヌ', 'ネ', 'ノ', 'ハ', 'ヒ', 'フ', 'ヘ', 'ホ', 'マ', 'ミ', 'ム', 'メ', 'モ', 'ヤ', 'ユ', 'ヨ', 'ラ', 'リ', 'ル', 'レ', 'ロ', 'ワ', 'ン', '゛', '゜', 'ヺ', 'ヴ', 'ガ', 'ギ', 'グ', 'ゲ', 'ゴ', 'ザ', 'ジ', 'ズ', 'ゼ', 'ゾ', 'ダ', 'ヂ', 'ヅ', 'デ', 'ド', 'バ', 'パ', 'ビ', 'ピ', 'ブ', 'プ', 'ベ', 'ペ', 'ボ', 'ポ', 'ヷ']}
 };
-},{}],170:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 'use strict';
 
 
@@ -22682,7 +22414,7 @@ Moji.prototype._regexpMap = function _regexpMap(mojisyu, callback) {
 };
 
 module.exports = Moji;
-},{}],171:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 "use strict";
 var Moji = require("./moji.core");
 var mojiStr = require("./moji.string");
@@ -22702,7 +22434,7 @@ moji.addMojisyu = function (syu) {
 
 module.exports = moji;
 
-},{"./default_mojisyu":169,"./moji.core":170,"./moji.string":172,"object-assign":168}],172:[function(require,module,exports){
+},{"./default_mojisyu":168,"./moji.core":169,"./moji.string":171,"object-assign":167}],171:[function(require,module,exports){
 function mojiStr() {
     /**
      * trim
@@ -22750,7 +22482,7 @@ module.exports = mojiStr;
 //trimRight
 //encodeURIComponent
 //decodeURIComponent
-},{}],173:[function(require,module,exports){
+},{}],172:[function(require,module,exports){
 //! moment.js
 //! version : 2.18.1
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
@@ -27215,7 +26947,7 @@ return hooks;
 
 })));
 
-},{}],174:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -27366,7 +27098,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's'
 }
 
-},{}],175:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -27458,7 +27190,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],176:[function(require,module,exports){
+},{}],175:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es5-shim
@@ -27600,7 +27332,7 @@ keysShim.shim = function shimObjectKeys() {
 
 module.exports = keysShim;
 
-},{"./isArguments":177}],177:[function(require,module,exports){
+},{"./isArguments":176}],176:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -27619,7 +27351,7 @@ module.exports = function isArguments(value) {
 	return isArgs;
 };
 
-},{}],178:[function(require,module,exports){
+},{}],177:[function(require,module,exports){
 'use strict'
 
 var characterEntities = require('character-entities')
@@ -28065,7 +27797,7 @@ function disallowed(code) {
   )
 }
 
-},{"character-entities":55,"character-entities-legacy":54,"character-reference-invalid":56,"is-alphanumerical":153,"is-decimal":157,"is-hexadecimal":158}],179:[function(require,module,exports){
+},{"character-entities":55,"character-entities-legacy":54,"character-reference-invalid":56,"is-alphanumerical":152,"is-decimal":156,"is-hexadecimal":157}],178:[function(require,module,exports){
 (function (process){
 // .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
 // backported and transplited with Babel, with backwards-compat fixes
@@ -28371,7 +28103,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":180}],180:[function(require,module,exports){
+},{"_process":179}],179:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -28557,7 +28289,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],181:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 'use strict';
 
 var toObject = Object;
@@ -28586,7 +28318,7 @@ module.exports = function flags() {
 	return result;
 };
 
-},{}],182:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 'use strict';
 
 var define = require('define-properties');
@@ -28605,7 +28337,7 @@ define(flagsBound, {
 
 module.exports = flagsBound;
 
-},{"./implementation":181,"./polyfill":183,"./shim":184,"define-properties":128}],183:[function(require,module,exports){
+},{"./implementation":180,"./polyfill":182,"./shim":183,"define-properties":128}],182:[function(require,module,exports){
 'use strict';
 
 var implementation = require('./implementation');
@@ -28627,7 +28359,7 @@ module.exports = function getPolyfill() {
 	return implementation;
 };
 
-},{"./implementation":181,"define-properties":128}],184:[function(require,module,exports){
+},{"./implementation":180,"define-properties":128}],183:[function(require,module,exports){
 'use strict';
 
 var supportsDescriptors = require('define-properties').supportsDescriptors;
@@ -28655,7 +28387,7 @@ module.exports = function shimFlags() {
 	return polyfill;
 };
 
-},{"./polyfill":183,"define-properties":128}],185:[function(require,module,exports){
+},{"./polyfill":182,"define-properties":128}],184:[function(require,module,exports){
 (function (global){
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.regx = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
@@ -28697,7 +28429,7 @@ function regx(flags) {
 },{}]},{},[1])(1)
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],186:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -28770,7 +28502,7 @@ function isRemarkCompiler(compiler) {
   );
 }
 
-},{"./lib/compile":187,"./lib/matters":189,"./lib/parse":190,"xtend":289}],187:[function(require,module,exports){
+},{"./lib/compile":186,"./lib/matters":188,"./lib/parse":189,"xtend":289}],186:[function(require,module,exports){
 'use strict';
 
 var fence = require('./fence');
@@ -28791,7 +28523,7 @@ function create(matter) {
   }
 }
 
-},{"./fence":188}],188:[function(require,module,exports){
+},{"./fence":187}],187:[function(require,module,exports){
 'use strict';
 
 module.exports = fence;
@@ -28811,7 +28543,7 @@ function pick(schema, prop) {
   return typeof schema === 'string' ? schema : schema[prop];
 }
 
-},{}],189:[function(require,module,exports){
+},{}],188:[function(require,module,exports){
 'use strict';
 
 var fault = require('fault');
@@ -28868,7 +28600,7 @@ function matter(option) {
   return result;
 }
 
-},{"fault":145}],190:[function(require,module,exports){
+},{"fault":144}],189:[function(require,module,exports){
 'use strict';
 
 var fence = require('./fence');
@@ -28915,7 +28647,7 @@ function create(matter) {
   }
 }
 
-},{"./fence":188}],191:[function(require,module,exports){
+},{"./fence":187}],190:[function(require,module,exports){
 'use strict';
 
 var unherit = require('unherit');
@@ -28931,7 +28663,7 @@ function parse(options) {
   this.Parser = Local;
 }
 
-},{"./lib/parser.js":205,"unherit":276,"xtend":289}],192:[function(require,module,exports){
+},{"./lib/parser.js":204,"unherit":275,"xtend":289}],191:[function(require,module,exports){
 module.exports=[
   "address",
   "article",
@@ -29001,7 +28733,7 @@ module.exports=[
   "ul"
 ]
 
-},{}],193:[function(require,module,exports){
+},{}],192:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -29067,7 +28799,7 @@ function factory(ctx) {
   }
 }
 
-},{"parse-entities":178,"xtend":289}],194:[function(require,module,exports){
+},{"parse-entities":177,"xtend":289}],193:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -29079,7 +28811,7 @@ module.exports = {
   blocks: require('./block-elements.json')
 };
 
-},{"./block-elements.json":192}],195:[function(require,module,exports){
+},{"./block-elements.json":191}],194:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29098,7 +28830,7 @@ function locate(value, fromIndex) {
   return index;
 }
 
-},{}],196:[function(require,module,exports){
+},{}],195:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29107,7 +28839,7 @@ function locate(value, fromIndex) {
   return value.indexOf('`', fromIndex);
 }
 
-},{}],197:[function(require,module,exports){
+},{}],196:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29116,7 +28848,7 @@ function locate(value, fromIndex) {
   return value.indexOf('~~', fromIndex);
 }
 
-},{}],198:[function(require,module,exports){
+},{}],197:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29136,7 +28868,7 @@ function locate(value, fromIndex) {
   return underscore < asterisk ? underscore : asterisk;
 }
 
-},{}],199:[function(require,module,exports){
+},{}],198:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29145,7 +28877,7 @@ function locate(value, fromIndex) {
   return value.indexOf('\\', fromIndex);
 }
 
-},{}],200:[function(require,module,exports){
+},{}],199:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29163,7 +28895,7 @@ function locate(value, fromIndex) {
   return link < image ? link : image;
 }
 
-},{}],201:[function(require,module,exports){
+},{}],200:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29183,7 +28915,7 @@ function locate(value, fromIndex) {
   return underscore < asterisk ? underscore : asterisk;
 }
 
-},{}],202:[function(require,module,exports){
+},{}],201:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29192,7 +28924,7 @@ function locate(value, fromIndex) {
   return value.indexOf('<', fromIndex);
 }
 
-},{}],203:[function(require,module,exports){
+},{}],202:[function(require,module,exports){
 'use strict';
 
 module.exports = locate;
@@ -29220,7 +28952,7 @@ function locate(value, fromIndex) {
   return min;
 }
 
-},{}],204:[function(require,module,exports){
+},{}],203:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -29267,7 +28999,7 @@ function parse() {
   return node;
 }
 
-},{"unist-util-remove-position":278,"xtend":289}],205:[function(require,module,exports){
+},{"unist-util-remove-position":277,"xtend":289}],204:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -29421,7 +29153,7 @@ function keys(value) {
   return result;
 }
 
-},{"./decode":193,"./defaults":194,"./parse":204,"./set-options":206,"./tokenize/auto-link":207,"./tokenize/blockquote":208,"./tokenize/break":209,"./tokenize/code-fenced":210,"./tokenize/code-indented":211,"./tokenize/code-inline":212,"./tokenize/definition":213,"./tokenize/delete":214,"./tokenize/emphasis":215,"./tokenize/escape":216,"./tokenize/footnote-definition":217,"./tokenize/heading-atx":218,"./tokenize/heading-setext":219,"./tokenize/html-block":220,"./tokenize/html-inline":221,"./tokenize/link":222,"./tokenize/list":223,"./tokenize/newline":224,"./tokenize/paragraph":225,"./tokenize/reference":226,"./tokenize/strong":227,"./tokenize/table":228,"./tokenize/text":229,"./tokenize/thematic-break":230,"./tokenize/url":231,"./tokenizer":232,"./unescape":233,"state-toggle":243,"vfile-location":282,"xtend":289}],206:[function(require,module,exports){
+},{"./decode":192,"./defaults":193,"./parse":203,"./set-options":205,"./tokenize/auto-link":206,"./tokenize/blockquote":207,"./tokenize/break":208,"./tokenize/code-fenced":209,"./tokenize/code-indented":210,"./tokenize/code-inline":211,"./tokenize/definition":212,"./tokenize/delete":213,"./tokenize/emphasis":214,"./tokenize/escape":215,"./tokenize/footnote-definition":216,"./tokenize/heading-atx":217,"./tokenize/heading-setext":218,"./tokenize/html-block":219,"./tokenize/html-inline":220,"./tokenize/link":221,"./tokenize/list":222,"./tokenize/newline":223,"./tokenize/paragraph":224,"./tokenize/reference":225,"./tokenize/strong":226,"./tokenize/table":227,"./tokenize/text":228,"./tokenize/thematic-break":229,"./tokenize/url":230,"./tokenizer":231,"./unescape":232,"state-toggle":242,"vfile-location":281,"xtend":289}],205:[function(require,module,exports){
 'use strict';
 
 var xtend = require('xtend');
@@ -29470,7 +29202,7 @@ function setOptions(options) {
   return self;
 }
 
-},{"./defaults":194,"markdown-escapes":165,"xtend":289}],207:[function(require,module,exports){
+},{"./defaults":193,"markdown-escapes":164,"xtend":289}],206:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -29617,7 +29349,7 @@ function autoLink(eat, value, silent) {
   });
 }
 
-},{"../locate/tag":202,"is-whitespace-character":162,"parse-entities":178}],208:[function(require,module,exports){
+},{"../locate/tag":201,"is-whitespace-character":161,"parse-entities":177}],207:[function(require,module,exports){
 'use strict';
 
 var trim = require('trim');
@@ -29748,7 +29480,7 @@ function blockquote(eat, value, silent) {
   });
 }
 
-},{"../util/interrupt":236,"trim":274}],209:[function(require,module,exports){
+},{"../util/interrupt":235,"trim":273}],208:[function(require,module,exports){
 'use strict';
 
 var locate = require('../locate/break');
@@ -29790,7 +29522,7 @@ function hardBreak(eat, value, silent) {
   }
 }
 
-},{"../locate/break":195}],210:[function(require,module,exports){
+},{"../locate/break":194}],209:[function(require,module,exports){
 'use strict';
 
 var trim = require('trim-trailing-lines');
@@ -30028,7 +29760,7 @@ function fencedCode(eat, value, silent) {
   });
 }
 
-},{"trim-trailing-lines":273}],211:[function(require,module,exports){
+},{"trim-trailing-lines":272}],210:[function(require,module,exports){
 'use strict';
 
 var repeat = require('repeat-string');
@@ -30128,7 +29860,7 @@ function indentedCode(eat, value, silent) {
   }
 }
 
-},{"repeat-string":239,"trim-trailing-lines":273}],212:[function(require,module,exports){
+},{"repeat-string":238,"trim-trailing-lines":272}],211:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -30242,7 +29974,7 @@ function inlineCode(eat, value, silent) {
   });
 }
 
-},{"../locate/code-inline":196,"is-whitespace-character":162}],213:[function(require,module,exports){
+},{"../locate/code-inline":195,"is-whitespace-character":161}],212:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -30522,7 +30254,7 @@ function isUnclosedURLCharacter(character) {
     !whitespace(character);
 }
 
-},{"../util/normalize":237,"is-whitespace-character":162}],214:[function(require,module,exports){
+},{"../util/normalize":236,"is-whitespace-character":161}],213:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -30584,7 +30316,7 @@ function strikethrough(eat, value, silent) {
   }
 }
 
-},{"../locate/delete":197,"is-whitespace-character":162}],215:[function(require,module,exports){
+},{"../locate/delete":196,"is-whitespace-character":161}],214:[function(require,module,exports){
 'use strict';
 
 var trim = require('trim');
@@ -30671,7 +30403,7 @@ function emphasis(eat, value, silent) {
   }
 }
 
-},{"../locate/emphasis":198,"is-whitespace-character":162,"is-word-character":163,"trim":274}],216:[function(require,module,exports){
+},{"../locate/emphasis":197,"is-whitespace-character":161,"is-word-character":162,"trim":273}],215:[function(require,module,exports){
 'use strict';
 
 var locate = require('../locate/escape');
@@ -30707,7 +30439,7 @@ function escape(eat, value, silent) {
   }
 }
 
-},{"../locate/escape":199}],217:[function(require,module,exports){
+},{"../locate/escape":198}],216:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -30894,7 +30626,7 @@ function footnoteDefinition(eat, value, silent) {
   });
 }
 
-},{"../util/normalize":237,"is-whitespace-character":162}],218:[function(require,module,exports){
+},{"../util/normalize":236,"is-whitespace-character":161}],217:[function(require,module,exports){
 'use strict';
 
 module.exports = atxHeading;
@@ -31037,7 +30769,7 @@ function atxHeading(eat, value, silent) {
   });
 }
 
-},{}],219:[function(require,module,exports){
+},{}],218:[function(require,module,exports){
 'use strict';
 
 module.exports = setextHeading;
@@ -31146,7 +30878,7 @@ function setextHeading(eat, value, silent) {
   });
 }
 
-},{}],220:[function(require,module,exports){
+},{}],219:[function(require,module,exports){
 'use strict';
 
 var openCloseTag = require('../util/html').openCloseTag;
@@ -31242,7 +30974,7 @@ function blockHTML(eat, value, silent) {
   return eat(subvalue)({type: 'html', value: subvalue});
 }
 
-},{"../util/html":235}],221:[function(require,module,exports){
+},{"../util/html":234}],220:[function(require,module,exports){
 'use strict';
 
 var alphabetical = require('is-alphabetical');
@@ -31298,7 +31030,7 @@ function inlineHTML(eat, value, silent) {
   return eat(subvalue)({type: 'html', value: subvalue});
 }
 
-},{"../locate/tag":202,"../util/html":235,"is-alphabetical":152}],222:[function(require,module,exports){
+},{"../locate/tag":201,"../util/html":234,"is-alphabetical":151}],221:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -31692,7 +31424,7 @@ function link(eat, value, silent) {
   return eat(subvalue)(node);
 }
 
-},{"../locate/link":200,"is-whitespace-character":162}],223:[function(require,module,exports){
+},{"../locate/link":199,"is-whitespace-character":161}],222:[function(require,module,exports){
 'use strict';
 
 /* eslint-disable max-params */
@@ -32168,7 +31900,7 @@ function normalListItem(ctx, value, position) {
   }
 }
 
-},{"../util/get-indentation":234,"../util/interrupt":236,"../util/remove-indentation":238,"is-decimal":157,"repeat-string":239,"trim":274}],224:[function(require,module,exports){
+},{"../util/get-indentation":233,"../util/interrupt":235,"../util/remove-indentation":237,"is-decimal":156,"repeat-string":238,"trim":273}],223:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -32217,7 +31949,7 @@ function newline(eat, value, silent) {
   eat(subvalue);
 }
 
-},{"is-whitespace-character":162}],225:[function(require,module,exports){
+},{"is-whitespace-character":161}],224:[function(require,module,exports){
 'use strict';
 
 var trim = require('trim');
@@ -32341,7 +32073,7 @@ function paragraph(eat, value, silent) {
   });
 }
 
-},{"../util/interrupt":236,"is-decimal":157,"trim":274,"trim-trailing-lines":273}],226:[function(require,module,exports){
+},{"../util/interrupt":235,"is-decimal":156,"trim":273,"trim-trailing-lines":272}],225:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -32549,7 +32281,7 @@ function reference(eat, value, silent) {
   return eat(subvalue)(node);
 }
 
-},{"../locate/link":200,"../util/normalize":237,"is-whitespace-character":162}],227:[function(require,module,exports){
+},{"../locate/link":199,"../util/normalize":236,"is-whitespace-character":161}],226:[function(require,module,exports){
 'use strict';
 
 var trim = require('trim');
@@ -32635,7 +32367,7 @@ function strong(eat, value, silent) {
   }
 }
 
-},{"../locate/strong":201,"is-whitespace-character":162,"trim":274}],228:[function(require,module,exports){
+},{"../locate/strong":200,"is-whitespace-character":161,"trim":273}],227:[function(require,module,exports){
 'use strict';
 
 var whitespace = require('is-whitespace-character');
@@ -32903,7 +32635,7 @@ function table(eat, value, silent) {
   return table;
 }
 
-},{"is-whitespace-character":162}],229:[function(require,module,exports){
+},{"is-whitespace-character":161}],228:[function(require,module,exports){
 'use strict';
 
 module.exports = text;
@@ -32963,7 +32695,7 @@ function text(eat, value, silent) {
   });
 }
 
-},{}],230:[function(require,module,exports){
+},{}],229:[function(require,module,exports){
 'use strict';
 
 module.exports = thematicBreak;
@@ -33035,7 +32767,7 @@ function thematicBreak(eat, value, silent) {
   }
 }
 
-},{}],231:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 'use strict';
 
 var decode = require('parse-entities');
@@ -33181,7 +32913,7 @@ function url(eat, value, silent) {
   });
 }
 
-},{"../locate/url":203,"is-whitespace-character":162,"parse-entities":178}],232:[function(require,module,exports){
+},{"../locate/url":202,"is-whitespace-character":161,"parse-entities":177}],231:[function(require,module,exports){
 'use strict';
 
 module.exports = factory;
@@ -33514,7 +33246,7 @@ function factory(type) {
   }
 }
 
-},{}],233:[function(require,module,exports){
+},{}],232:[function(require,module,exports){
 'use strict';
 
 module.exports = factory;
@@ -33553,7 +33285,7 @@ function factory(ctx, key) {
   }
 }
 
-},{}],234:[function(require,module,exports){
+},{}],233:[function(require,module,exports){
 'use strict';
 
 module.exports = indentation;
@@ -33587,7 +33319,7 @@ function indentation(value) {
   return {indent: indent, stops: stops};
 }
 
-},{}],235:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 'use strict';
 
 var attributeName = '[a-zA-Z_:][a-zA-Z0-9:._-]*';
@@ -33614,7 +33346,7 @@ exports.tag = new RegExp('^(?:' +
   cdata +
 ')');
 
-},{}],236:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 'use strict';
 
 module.exports = interrupt;
@@ -33659,7 +33391,7 @@ function interrupt(interruptors, tokenizers, ctx, params) {
   return false;
 }
 
-},{}],237:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 'use strict';
 
 var collapseWhiteSpace = require('collapse-white-space');
@@ -33672,7 +33404,7 @@ function normalize(value) {
   return collapseWhiteSpace(value).toLowerCase();
 }
 
-},{"collapse-white-space":125}],238:[function(require,module,exports){
+},{"collapse-white-space":125}],237:[function(require,module,exports){
 'use strict';
 
 var trim = require('trim');
@@ -33752,7 +33484,7 @@ function indentation(value, maximum) {
   return values.join(C_NEWLINE);
 }
 
-},{"./get-indentation":234,"repeat-string":239,"trim":274}],239:[function(require,module,exports){
+},{"./get-indentation":233,"repeat-string":238,"trim":273}],238:[function(require,module,exports){
 /*!
  * repeat-string <https://github.com/jonschlinkert/repeat-string>
  *
@@ -33824,7 +33556,7 @@ function repeat(str, num) {
   return res;
 }
 
-},{}],240:[function(require,module,exports){
+},{}],239:[function(require,module,exports){
 'use strict';
 
 var path = require('path');
@@ -33844,7 +33576,7 @@ function replaceExt(npath, ext) {
 
 module.exports = replaceExt;
 
-},{"path":179}],241:[function(require,module,exports){
+},{"path":178}],240:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -33986,7 +33718,7 @@ function createSentenceNode(text, loc, range) {
     };
 }
 
-},{"assert":48,"structured-source":244}],242:[function(require,module,exports){
+},{"assert":48,"structured-source":243}],241:[function(require,module,exports){
 "use strict";
 var dictionaryItems = require("technical-word-rules");
 var StructuredSource = require('structured-source');
@@ -34045,7 +33777,7 @@ module.exports = {
     spellCheckText: spellCheckText
 };
 
-},{"structured-source":244,"technical-word-rules":246}],243:[function(require,module,exports){
+},{"structured-source":243,"technical-word-rules":245}],242:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -34092,7 +33824,7 @@ function factory(key, state, ctx) {
   };
 }
 
-},{}],244:[function(require,module,exports){
+},{}],243:[function(require,module,exports){
 "use strict";
 
 var StructuredSource = require('./structured-source.js')["default"];
@@ -34102,7 +33834,7 @@ module.exports = StructuredSource;
 
 /* vim: set sw=4 ts=4 et tw=80 : */
 
-},{"./structured-source.js":245}],245:[function(require,module,exports){
+},{"./structured-source.js":244}],244:[function(require,module,exports){
 "use strict";
 
 var _classProps = function (child, staticProps, instanceProps) {
@@ -34187,9 +33919,9 @@ var StructuredSource = (function () {
 
 exports["default"] = StructuredSource;
 
-},{"boundary":53}],246:[function(require,module,exports){
+},{"boundary":53}],245:[function(require,module,exports){
 module.exports=[{"pattern":"(\\d+年\\d+月\\d+日)\\s発売","expected":"$1発売"},{"pattern":"(?:(が)デフォルト有効)|(?:デフォルト有効(に))","expected":"$1デフォルトで有効$2"},{"pattern":"用に(な)","expected":"ように$1"},{"pattern":"など追加","expected":"などが追加"},{"pattern":"(?:の比較して)","expected":"を比較して"},{"pattern":"(?:新規開発終了)","expected":"新規開発を終了"},{"pattern":"どういう(?!こと)","expected":"どのような"},{"pattern":"\\bFundation\\b","expected":"Foundation"},{"pattern":"ライブライ","expected":"ライブラリ"},{"pattern":"\\bChronium\\b","expected":"Chromium"},{"pattern":"リリーう","expected":"リリース"},{"pattern":"propety","expected":"Property","flag":"i"},{"pattern":"Array Function","expected":"Arrow Function"},{"pattern":"今ままで","expected":"今まで"},{"pattern":"CoffeScript","expected":"CoffeeScript"},{"pattern":"対処方","expected":"対処法"},{"pattern":"行得る","expected":"行える"},{"pattern":"peformance","expected":"Performance","flag":"i"},{"pattern":"Workaound","expected":"Workaround"},{"pattern":"(?:Custome\\b)","expected":"Custom"},{"pattern":"oeprator","expected":"operator"},{"pattern":"サイトイン","expected":"サインイン"},{"pattern":"\\bwebpac(?!k)\\b","expected":"webpack"},{"pattern":"packge\\.json","expected":"package.json"},{"pattern":"\\b方定義\\b","expected":"型定義"},{"pattern":"クッキー|\\bCOOKIE\\b|\\bcookie\\b","expected":"Cookie"},{"pattern":"\\bWeb Socket\\b","expected":"WebSocket"},{"pattern":"(?:WEB([^(\\+DB)]))","expected":"Web$1"},{"pattern":"(?:([^\\/])ウェッブ)|(?:ウェッブ([^\\+]))","expected":"$1Web$2"},{"pattern":"ORマッ|O-Rマッ","expected":"O/Rマッ"},{"pattern":"O\\/Rマッパー|\\bORM\\b","expected":"O/Rマッパ"},{"pattern":"アィディア|アイディア|アィディア|アィデア","expected":"アイデア"},{"pattern":"アステリスク","expected":"アスタリスク"},{"pattern":"アーキテクチャー|アーキティクチャ","expected":"アーキテクチャ"},{"pattern":"\\bActivity\\b|アクティビティー","expected":"アクティビティ"},{"pattern":"アダプター","expected":"アダプタ"},{"pattern":"アノーテーション","expected":"アノテーション"},{"pattern":"\\bApplet\\b","expected":"アプレット"},{"pattern":"アニメーター","expected":"アニメータ"},{"pattern":"アンダーバー","expected":"アンダースコア"},{"pattern":"インストーラー","expected":"インストーラ"},{"pattern":"インスパイヤ","expected":"インスパイア"},{"pattern":"インタープリタ|インタプリター|インタープリター","expected":"インタプリタ"},{"pattern":"インデクス","expected":"インデックス"},{"pattern":"\\bIntent\\b","expected":"インテント"},{"pattern":"\\bWidget\\b|\\bwidget\\b","expected":"ウィジェット"},{"pattern":"ウイルス","expected":"ウィルス"},{"pattern":"ウインドウ","expected":"ウィンドウ"},{"pattern":"ウエア","expected":"ウェア"},{"pattern":"エディター","expected":"エディタ"},{"pattern":"エミッター","expected":"エミッタ"},{"pattern":"エンコーダー","expected":"エンコーダ"},{"pattern":"デコーダー","expected":"デコーダ"},{"pattern":"エミュレーター","expected":"エミュレータ"},{"pattern":"\\bEntity\\b|\\bentity\\b|エンティティー","expected":"エンティティ"},{"pattern":"エントリー","expected":"エントリ"},{"pattern":"オブション","expected":"オプション"},{"pattern":"カウンター","expected":"カウンタ"},{"pattern":"ガベージ・|ガーベジ|ガーベジ・|ガーベージ|ガーベージ・|ガーベッジ|ガーベッジ・","expected":"ガベージ"},{"pattern":"カテゴリー","expected":"カテゴリ"},{"pattern":"キャラクター","expected":"キャラクタ"},{"pattern":"\\bQueryString\\b|\\bQuery String\\b|クエリストリング|クエリーストリング","expected":"クエリ文字列"},{"pattern":"クエリー","expected":"クエリ"},{"pattern":"クライアント\\/サーバ|クライアント\\/サーバー|クライアント・サーバ|クライアント・サーバー|クライアントサーバ|クライアントサーバー","expected":"クライアント／サーバ"},{"pattern":"クラスター","expected":"クラスタ"},{"pattern":"グランド","expected":"グラウンド"},{"pattern":"クロージャー","expected":"クロージャ"},{"pattern":"クローラー","expected":"クローラ"},{"pattern":"ゲッター","expected":"ゲッタ"},{"pattern":"コピー＆ペースト|コピペ|コピーアンドペースト","expected":"コピー&ペースト"},{"pattern":"コミッター","expected":"コミッタ"},{"pattern":"コミニュ","expected":"コミュニ"},{"pattern":"コンストラクター","expected":"コンストラクタ"},{"pattern":"コンテクスト","expected":"コンテキスト"},{"pattern":"\\bContent provider\\b","expected":"コンテントプロバイダ"},{"pattern":"コンテナー","expected":"コンテナ"},{"pattern":"コンピューター","expected":"コンピュータ"},{"pattern":"コントローラー","expected":"コントローラ"},{"pattern":"サーバー","expected":"サーバ"},{"pattern":"\\bServlet\\b|\\bSERVLET\\b","expected":"サーブレット"},{"pattern":"サーブレット／JSP|サーブレット＆JSP|サーブレット&JSP","expected":"サーブレット/JSP"},{"pattern":"ジェネレーター","expected":"ジェネレータ"},{"pattern":"ジェネレイティブ","expected":"ジェネレーティブ"},{"pattern":"ジョブス","expected":"ジョブズ"},{"pattern":"\\bGeotag\\b|\\bgeotag\\b","expected":"ジオタグ"},{"pattern":"シュミレー","expected":"シミュレー"},{"pattern":"スカラー","expected":"スカラ"},{"pattern":"スタンドアロン","expected":"スタンドアローン"},{"pattern":"ストアード","expected":"ストアド"},{"pattern":"ストレッジ|ストレジ","expected":"ストレージ"},{"pattern":"セキュリティー","expected":"セキュリティ"},{"pattern":"\\bsession\\b|\\bSession\\b","expected":"セッション"},{"pattern":"セッター","expected":"セッタ"},{"pattern":"セレクター","expected":"セレクタ"},{"pattern":"([^経])ソフトウエア","expected":"$1ソフトウェア"},{"pattern":"ダイヤグラム","expected":"ダイアグラム"},{"pattern":"\\btimestamp\\b|\\bTimestamp\\b","expected":"タイムスタンプ"},{"pattern":"\\btweet\\b|\\bTweet\\b|ツィート","expected":"ツイート"},{"pattern":"ツリー・オブジェクト","expected":"ツリーオブジェクト"},{"pattern":"ツリー・エントリ","expected":"ツリーエントリ"},{"pattern":"ディレクタ(?!ー)","expected":"ディレクター"},{"pattern":"\\bData Services\\b","expected":"データサービス"},{"pattern":"\\bData Sync\\b","expected":"データ同期"},{"pattern":"チェーン","expected":"チェイン"},{"pattern":"\\bDisk\\b","expected":"ディスク"},{"pattern":"ディスパッチャー","expected":"ディスパッチャ"},{"pattern":"ディスプレー","expected":"ディスプレイ"},{"pattern":"ディレクトリー","expected":"ディレクトリ"},{"pattern":"テクノロジー","expected":"テクノロジ"},{"pattern":"デザイナー","expected":"デザイナ"},{"pattern":"デバック","expected":"デバッグ"},{"pattern":"既定|ディフォルト|デフォールト","expected":"デフォルト"},{"pattern":"デプロイメント","expected":"デプロイ"},{"pattern":"ディベロッパー|ディベロッパ|デベロッパー|ディヴェロッパ","expected":"デベロッパ"},{"pattern":"デリバリー","expected":"デリバリ"},{"pattern":"ドキュメンテーション","expected":"ドキュメント"},{"pattern":"ドライバー","expected":"ドライバ"},{"pattern":"ドラッグ・アンド・ドロップ|ドラッグアンドドロップ|ドラッグ＆ドロップ","expected":"ドラッグ&ドロップ"},{"pattern":"ハイパー・リンク","expected":"ハイパーリンク"},{"pattern":"パーサー|パーザー|パーザ","expected":"パーサ"},{"pattern":"\\bPermalink\\b|\\bpermalink\\b|\\bpermanent link\\b|パーマネントリンク","expected":"パーマリンク"},{"pattern":"バッファー","expected":"バッファ"},{"pattern":"([^\\w\\s])\\bpath\\b|([^\\w\\s])\\bPath\\b","expected":"$1パス"},{"pattern":"パタン","expected":"パターン"},{"pattern":"薔薇","expected":"バラ"},{"pattern":"バラエティー","expected":"バラエティ"},{"pattern":"パラメタ|パラメーター","expected":"パラメータ"},{"pattern":"バランサー","expected":"バランサ"},{"pattern":"ハンドラー","expected":"ハンドラ"},{"pattern":"hit率","expected":"ヒット率"},{"pattern":"ファイラー","expected":"ファイラ"},{"pattern":"ファクトリー","expected":"ファクトリ"},{"pattern":"フィーチャフォン","expected":"フィーチャーフォン"},{"pattern":"Webブラウザー?|WEBブラウザー?","expected":"ブラウザ"},{"pattern":"ブラウザー","expected":"ブラウザ"},{"pattern":"プライマリー","expected":"プライマリ"},{"pattern":"プラットホーム","expected":"プラットフォーム"},{"pattern":"プレフィクス|プリフィックス","expected":"プレフィックス"},{"pattern":"プレーヤ","expected":"プレイヤー"},{"pattern":"プレーヤー","expected":"プレーヤ"},{"pattern":"ブレイク","expected":"ブレーク"},{"pattern":"プレイン([^グ])","expected":"プレーン$1"},{"pattern":"プロパティー","expected":"プロパティ"},{"pattern":"ヘヴィ","expected":"ヘビー"},{"pattern":"レビュアー|レビュワー|レビュワ|レビューアー|レビューア|レビューワー|レビューワ","expected":"レビュア"},{"pattern":"ビューアー|ビューワー|ビューワ","expected":"ビューア"},{"pattern":"ファイアーウォール|ファイヤーウォール|ファイヤウォール|ファイヤーウオール","expected":"ファイアウォール"},{"pattern":"フィルター","expected":"フィルタ"},{"pattern":"フィクスチャー","expected":"フィクスチャ"},{"pattern":"フェイルオーバ(?!ー)|フェールオーバー|フェールオーバ","expected":"フェイルオーバー"},{"pattern":"フェイズ","expected":"フェーズ"},{"pattern":"フッター|フッダ","expected":"フッタ"},{"pattern":"プロクシ|プロクシー|プロキシー","expected":"プロキシ"},{"pattern":"プログラマー","expected":"プログラマ"},{"pattern":"プロシージャー","expected":"プロシージャ"},{"pattern":"\\bBroadcast receiver\\b","expected":"ブロードキャストレシーバ"},{"pattern":"プロバイダー","expected":"プロバイダ"},{"pattern":"ベンダ(?!ー)","expected":"ベンダー"},{"pattern":"ヘッダー|ヘッタ|ヘッター","expected":"ヘッダ"},{"pattern":"ベクター","expected":"ベクタ"},{"pattern":"ページャー","expected":"ページャ"},{"pattern":"ポインター","expected":"ポインタ"},{"pattern":"ポリモルフィズム|ポリモーフィズム|ポルモルフィズム","expected":"ポリモフィズム"},{"pattern":"マトリクス","expected":"マトリックス"},{"pattern":"マッピングツール|マッパー","expected":"マッパ"},{"pattern":"マネージメント","expected":"マネジメント"},{"pattern":"メーカ(?!ー)","expected":"メーカー"},{"pattern":"\\bML\\b","expected":"メーリングリスト"},{"pattern":"メタファー","expected":"メタファ"},{"pattern":"メモリー","expected":"メモリ"},{"pattern":"メインテナンス","expected":"メンテナンス"},{"pattern":"メンテナー","expected":"メンテナ"},{"pattern":"メンバ([^ー])","expected":"メンバー$1"},{"pattern":"リーダ([^ー])","expected":"リーダー$1"},{"pattern":"リジューム","expected":"レジューム"},{"pattern":"ユーザー","expected":"ユーザ"},{"pattern":"ユーティリティー","expected":"ユーティリティ"},{"pattern":"Unitテスト|単体テスト","expected":"ユニットテスト"},{"pattern":"ライブラリー","expected":"ライブラリ"},{"pattern":"ラッパー","expected":"ラッパ"},{"pattern":"デグレード|デグレ","expected":"リグレッション"},{"pattern":"リスナー","expected":"リスナ"},{"pattern":"\\bReverse Proxy\\b","expected":"リバースプロキシ"},{"pattern":"リファラー","expected":"リファラ"},{"pattern":"リポジトリー|レポジトリ|レポジトリー","expected":"リポジトリ"},{"pattern":"ルーター","expected":"ルータ"},{"pattern":"レジストリー","expected":"レジストリ"},{"pattern":"レイテンシー","expected":"レイテンシ"},{"pattern":"ローダー","expected":"ローダ"},{"pattern":"ワーカー","expected":"ワーカ"},{"pattern":"\\bOnetime URL\\b","expected":"ワンタイムURL"},{"pattern":"\\bQuad Core CPU\\b","expected":"クアッドコアCPU"},{"pattern":"クァッドコア|\\bQuad Core\\b|クァッドCore|Quadコア","expected":"クアッドコア"},{"pattern":"\\bDual Core CPU\\b","expected":"デュアルコアCPU"},{"pattern":"\\bDual Core\\b|デュアルCore|Dualコア","expected":"デュアルコア"},{"pattern":"マスター([^.])","expected":"マスタ$1"},{"pattern":"マスタ・スレーブ","expected":"マスタ／スレーブ"},{"pattern":"\\bBackup\\b([^.])","expected":"バックアップ$1"},{"pattern":"スレイブ([^.])|\\bSlave\\b([^.])","expected":"スレーブ$1"},{"pattern":"ディスクリプタ","expected":"記述子"},{"pattern":"アトリビュート","expected":"属性"},{"pattern":"エレメント","expected":"要素"},{"pattern":"\\bAction Controller\\b","expected":"ActionController"},{"pattern":"\\bAction Mailer\\b","expected":"ActionMailer"},{"pattern":"\\bAction Pack\\b","expected":"ActionPack"},{"pattern":"\\bAction Script\\b|アクションスクリプト","expected":"ActionScript"},{"pattern":"ActionScript([0-9])","expected":"ActionScript $1"},{"pattern":"\\bActionScriptVirtualMachine\\b|\\bActionScript VirtualMachine\\b","expected":"ActionScript Virtual Machine"},{"pattern":"\\bAction View\\b","expected":"ActionView"},{"pattern":"\\bActive Model\\b","expected":"ActiveModel"},{"pattern":"\\bActive Record\\b","expected":"ActiveRecord"},{"pattern":"\\bActive Resource\\b","expected":"ActiveResource"},{"pattern":"\\bActive Support\\b","expected":"ActiveSupport"},{"pattern":"\\bapache\\b|\\bApatch\\b|\\bapatch\\b","expected":"Apache"},{"pattern":"Apache([0-9])|Apatch([0-9])","expected":"Apache $1$2"},{"pattern":"ASP \\.NET","expected":"ASP.NET"},{"pattern":"ビーン","expected":"Bean"},{"pattern":"\\bBigTable\\b|\\bBig Table\\b|\\bBig table\\b","expected":"Bigtable"},{"pattern":"\\bCakePHP\\b","expected":"CakePHP","flag":"i"},{"pattern":"CakePHP([0-9])","expected":"CakePHP $1"},{"pattern":"\\bCapistorano\\b","expected":"Capistrano"},{"pattern":"Chromeウェブストア|Chrome Webストア","expected":"Chrome Web Store"},{"pattern":"\\bCygwin\\b","expected":"Cygwin","flag":"i"},{"pattern":"\\bDBFlute\\b","expected":"DBFlute","flag":"i"},{"pattern":"(?:([^\\/.])ディー・エヌ・エー)|(?:ディー・エヌ・エー([^\\/.]))","expected":"$1DeNA$2"},{"pattern":"(?:([^\\/.])ディーエヌエー)|(?:ディーエヌエー([^\\/.]))","expected":"$1DeNA$2"},{"pattern":"(?:([^\\/.])\\bDENA)|(?:DENA\\b([^\\/.]))","expected":"$1DeNA$2"},{"pattern":"\\bDreamWeaver\\b","expected":"Dreamweaver"},{"pattern":"\\beasy_install\\b","expected":"easy_install","flag":"i"},{"pattern":"\\bEclipse\\b","expected":"Eclipse","flag":"i"},{"pattern":"\\bECMA Script\\b","expected":"ECMAScript"},{"pattern":"\\bEJB-JARファイル\\b","expected":"EJB-JARファイル","flag":"i"},{"pattern":"\\bElisp\\b","expected":"Elisp","flag":"i"},{"pattern":"\\bLisp\\b","expected":"Lisp","flag":"i"},{"pattern":"\\bEmacs\\b","expected":"Emacs","flag":"i"},{"pattern":"Emacs([0-9])","expected":"Emacs $1"},{"pattern":"\\bEmacs Lisp\\b","expected":"Emacs Lisp","flag":"i"},{"pattern":"\\bEventMachine\\b","expected":"EventMachine","flag":"i"},{"pattern":"エクセル","expected":"Excel"},{"pattern":"(?:([^\\/.])\\bfacebook)|(?:facebook\\b([^\\/.]))","expected":"$1Facebook$2"},{"pattern":"\\bFirebug\\b","expected":"Firebug","flag":"i"},{"pattern":"\\bFireFox\\b|\\bFire Fox\\b|ファイアーフォックス|ファイヤーフォックス","expected":"Firefox"},{"pattern":"フラッシュ","expected":"Flash"},{"pattern":"\\bFlashLite\\b","expected":"Flash Lite"},{"pattern":"Flashプレイヤー|Flash プレイヤー|Flashプレーヤ|Flash プレーヤ|Flashプレーヤー|Flash プレーヤー|\\bFlashPlayer\\b","expected":"Flash Player"},{"pattern":"\\bFlash Platform\\b","expected":"Flashプラットフォーム"},{"pattern":"\\bFlexBuilder\\b","expected":"Flex Builder"},{"pattern":"\\bGoogleGears\\b|\\bGoogle Gears\\b","expected":"Gears"},{"pattern":"\\bGHCi\\b","expected":"GHCi","flag":"i"},{"pattern":"\\bGit\\b","expected":"Git","flag":"i"},{"pattern":"([^\\/\\.])\\bgithub\\b","expected":"$1GitHub"},{"pattern":"(?:([^\\/.@])\\bgmail)|(?:gmail\\b([^\\/.]))","expected":"$1Gmail$2"},{"pattern":"Googleガジェット","expected":"Google Gadget"},{"pattern":"\\bGoogle Map\\b|\\bGoogleMaps\\b|\\bGoogleMap\\b|Googleマップ","expected":"Google Maps"},{"pattern":"\\bGreaseMonkey\\b|\\bGrease monkey\\b|\\bGrease Monkey\\b","expected":"Greasemonkey"},{"pattern":"\\bgzip\\b","expected":"gzip","flag":"i"},{"pattern":"\\bHeartbeat\\b","expected":"Heartbeat","flag":"i"},{"pattern":"HTML 5","expected":"HTML5"},{"pattern":"HTML([0-4])","expected":"HTML $1"},{"pattern":"([^\\.\\s])\\bIO\\b","expected":"$1I/O"},{"pattern":"\\bImageMagick\\b","expected":"ImageMagick","flag":"i"},{"pattern":"Internet Explorer([0-9])","expected":"Internet Explorer $1"},{"pattern":"IE ([0-9])","expected":"IE$1"},{"pattern":"iノード","expected":"inode"},{"pattern":"\\biOS SDK\\b","expected":"iOS SDK","flag":"i"},{"pattern":"ISO\\-","expected":"ISO"},{"pattern":"ISO([0-9])","expected":"ISO $1"},{"pattern":"\\biPad\\b","expected":"iPad","flag":"i"},{"pattern":"\\biPhone\\b","expected":"iPhone","flag":"i"},{"pattern":"\\bJade\\b","expected":"Jade","flag":"i"},{"pattern":"\\bJARファイル\\b","expected":"JARファイル","flag":"i"},{"pattern":"Java([0-9])","expected":"Java $1"},{"pattern":"Java3D","expected":"Java 3D"},{"pattern":"\\bJavaEE\\b","expected":"Java EE"},{"pattern":"JavaEE([0-9])","expected":"Java EE $1"},{"pattern":"Java EE([0-9])","expected":"Java EE $1"},{"pattern":"\\bJavaSE\\b","expected":"Java SE"},{"pattern":"JavaSE([0-9])","expected":"Java SE $1"},{"pattern":"Java SE([0-9])","expected":"Java SE $1"},{"pattern":"\\bJavaBean\\b|\\bJava Bean\\b|\\bJava Beans\\b","expected":"JavaBeans"},{"pattern":"\\bJavadoc\\b","expected":"Javadoc","flag":"i"},{"pattern":"\\bJava Server Faces\\b","expected":"JavaServer Faces"},{"pattern":"\\bJava Server Pages\\b","expected":"JavaServer Pages"},{"pattern":"\\bJenkins\\b","expected":"Jenkins","flag":"i"},{"pattern":"JDK([0-9])","expected":"JDK $1"},{"pattern":"\\bJPEG\\b","expected":"JPEG","flag":"i"},{"pattern":"JSF([0-9])","expected":"JSF $1"},{"pattern":"JSP([0-9])","expected":"JSP $1"},{"pattern":"\\bJava VM\\b|\\bJavaVM\\b","expected":"JVM"},{"pattern":"Key-Value|キーバリュー|キー・バリュー|キー／バリュー","expected":"key-value"},{"pattern":"\\bKitchenSink\\b","expected":"KitchenSink","flag":"i"},{"pattern":"\\bKyotoCabinet\\b","expected":"Kyoto Cabinet"},{"pattern":"\\bKyotoTycoon\\b|Tokyo *Tycoon","expected":"Kyoto Tycoon"},{"pattern":"LL言語","expected":"LL"},{"pattern":"\\bMacOS\\b","expected":"Mac OS"},{"pattern":"\\bMacOSX\\b","expected":"Mac OS X"},{"pattern":"\\bMac Book\\b","expected":"MacBook"},{"pattern":"\\bMacPorts\\b","expected":"MacPorts","flag":"i"},{"pattern":"\\bMaven\\b","expected":"Maven","flag":"i"},{"pattern":"\\bMeCab\\b","expected":"MeCab","flag":"i"},{"pattern":"\\bmemcached\\b","expected":"memcached","flag":"i"},{"pattern":"(?:([^\\/.])マイクロソフト)|(?:マイクロソフト([^\\/.]))","expected":"$1Microsoft$2"},{"pattern":"(?:([^\\/.])\\bmicrosoft)|(?:microsoft\\b([^\\/.]))","expected":"$1Microsoft$2"},{"pattern":"\\bMigemo\\b","expected":"Migemo","flag":"i"},{"pattern":"\\bmixi\\b","expected":"mixi","flag":"i"},{"pattern":"\\bMongo DB\\b","expected":"MongoDB"},{"pattern":"\\bMySQL\\b","expected":"MySQL","flag":"i"},{"pattern":"Nagios([0-9])","expected":"Nagios $1"},{"pattern":"\\bnginx\\b","expected":"nginx","flag":"i"},{"pattern":"\\bNode.js\\b","expected":"Node.js","flag":"i"},{"pattern":"\\bOAuth\\b","expected":"OAuth","flag":"i"},{"pattern":"\\bOmniAuth\\b","expected":"OmniAuth","flag":"i"},{"pattern":"\\bOpen GL\\b","expected":"OpenGL"},{"pattern":"オペレーティングシステム","expected":"OS"},{"pattern":"パソコン","expected":"PC"},{"pattern":"\\bPentium IV\\b","expected":"Pentium 4"},{"pattern":"Pentium 2|Pentium2","expected":"Pentium II"},{"pattern":"Pentium 3|Pentium3","expected":"Pentium III"},{"pattern":"Perl([0-9])","expected":"Perl $1"},{"pattern":"\\bPerl\\b","expected":"Perl","flag":"i"},{"pattern":"\\bPhotoShop\\b|\\bphotoshop\\b|フォトショップ","expected":"Photoshop"},{"pattern":"PHP([0-9])","expected":"PHP $1"},{"pattern":"\\bPHPUnit\\b","expected":"PHPUnit","flag":"i"},{"pattern":"\\bping\\b","expected":"ping","flag":"i"},{"pattern":"\\bpip\\b","expected":"pip","flag":"i"},{"pattern":"\\bpixiv\\b","expected":"pixiv","flag":"i"},{"pattern":"\\bPOPFile\\b","expected":"POPFile","flag":"i"},{"pattern":"\\bPostScript\\b","expected":"PostScript","flag":"i"},{"pattern":"PostgreSQL([0-9])","expected":"PostgreSQL $1"},{"pattern":"\\bPython\\b","expected":"Python","flag":"i"},{"pattern":"\\bRADIUS\\b","expected":"RADIUS","flag":"i"},{"pattern":"Rails([0-9])","expected":"Rails $1"},{"pattern":"\\bRake\\b","expected":"Rake","flag":"i"},{"pattern":"\\bRedHat\\b|\\bRedhat\\b|\\bredhat\\b|\\bRedHad\\b|\\bRedhad\\b|\\bredhad\\b|レッドハット","expected":"Red Hat"},{"pattern":"\\bRedHatLinux\\b|\\bRedHat Linux\\b","expected":"Red Hat Linux"},{"pattern":"Red Hat Linux([0-9])|RedHatLinux([0-9])|RedHat Linux([0-9])","expected":"Red Hat Linux $1"},{"pattern":"\\bRedis\\b","expected":"Redis","flag":"i"},{"pattern":"\\bRELAX NG\\b","expected":"RELAX NG","flag":"i"},{"pattern":"RFC([0-9])","expected":"RFC $1"},{"pattern":"\\bRPC Services\\b","expected":"RPCサービス"},{"pattern":"\\bRuby\\b","expected":"Ruby","flag":"i"},{"pattern":"Ruby([0-9])","expected":"Ruby $1"},{"pattern":"\\bRuby On Rails\\b|\\bRoR\\b","expected":"Ruby on Rails"},{"pattern":"\\bRubyGems\\b","expected":"RubyGems","flag":"i"},{"pattern":"\\bRuby Gems\\b","expected":"RubyGems"},{"pattern":"SAML([0-9])","expected":"SAML $1"},{"pattern":"\\bScheme\\b","expected":"Scheme","flag":"i"},{"pattern":"Servlet([0-9])","expected":"Servlet $1"},{"pattern":"\\bSilverLight\\b|\\bSilver Light\\b","expected":"Silverlight"},{"pattern":"\\bSimpleTest\\b","expected":"SimpleTest","flag":"i"},{"pattern":"\\bSinatra\\b","expected":"Sinatra","flag":"i"},{"pattern":"\\bSkeedCast\\b","expected":"SkeedCast","flag":"i"},{"pattern":"(?:([^\\/.])スモールトーク)|(?:スモールトーク([^\\/.]))","expected":"$1Smalltalk$2"},{"pattern":"\\bSocket.IO\\b","expected":"Socket.IO","flag":"i"},{"pattern":"([^\\/.])\\bsourceforge\\b","expected":"$1SourceForge"},{"pattern":"\\bSpiderMonkey\\b","expected":"SpiderMonkey","flag":"i"},{"pattern":"SQL([0-9])","expected":"SQL $1"},{"pattern":"\\bSQLite\\b","expected":"SQLite","flag":"i"},{"pattern":"\\bSquid\\b","expected":"Squid","flag":"i"},{"pattern":"(?:([^\\/.])\\bSubVersion)|(?:SubVersion\\b([^\\/.]))","expected":"$1Subversion$2"},{"pattern":"(?:([^\\/.])\\bsubversion)|(?:subversion\\b([^\\/.]))","expected":"$1Subversion$2"},{"pattern":"\\bSun\\b","expected":"Sun","flag":"i"},{"pattern":"\\bSun RPC\\b","expected":"SunRPC"},{"pattern":"\\bSUSE\\b","expected":"SUSE","flag":"i"},{"pattern":"\\bSWFファイル\\b","expected":"SWFファイル","flag":"i"},{"pattern":"Symfony 2","expected":"Symfony2"},{"pattern":"Tomcat([0-9])","expected":"Tomcat $1"},{"pattern":"\\bTwitter\\b","expected":"Twitter","flag":"i"},{"pattern":"ツイッター","expected":"Twitter"},{"pattern":"\\bTokyoCabinet\\b","expected":"Tokyo Cabinet"},{"pattern":"\\bTokyoDystopia\\b|Kyoto *Dystopia","expected":"Tokyo Dystopia"},{"pattern":"\\bTokyoPromenade\\b|Kyoto *Promenade","expected":"Tokyo Promenade"},{"pattern":"\\bTokyoTyrant\\b|Kyoto *Tyrant","expected":"Tokyo Tyrant"},{"pattern":"\\bTriton\\b|\\btriton\\b|\\btritonn\\b","expected":"Tritonn"},{"pattern":"\\bubuntu\\b|\\bUbuntsu\\b|\\bubuntsu\\b|\\bUbuntu Linux\\b","expected":"Ubuntu"},{"pattern":"\\bunicode\\b|ユニコード","expected":"Unicode"},{"pattern":"\\bUnix\\b","expected":"UNIX"},{"pattern":"UTF8|UTF 8|utf8","expected":"UTF-8"},{"pattern":"vim([0-9])","expected":"Vim $1"},{"pattern":"\\bvim script\\b","expected":"Vimスクリプト"},{"pattern":"\\bVisualBasic\\b|\\bVB\\b","expected":"Visual Basic"},{"pattern":"Visual Studio\\.NET","expected":"Visual Studio .NET"},{"pattern":"\\bVMware\\b","expected":"VMware","flag":"i"},{"pattern":"\\bWARファイル\\b","expected":"WARファイル","flag":"i"},{"pattern":"\\bWebAPI\\b|\\bWEBAPI\\b|\\bWEB API\\b","expected":"Web API"},{"pattern":"\\bWebUI\\b","expected":"Web UI"},{"pattern":"\\bWeb Logic\\b","expected":"WebLogic"},{"pattern":"\\bWeb Sphere\\b","expected":"WebSphere"},{"pattern":"\\bWiFi\\b","expected":"Wi-Fi"},{"pattern":"Windows2000","expected":"Windows 2000"},{"pattern":"Windows Server 2000","expected":"Windows 2000 Server"},{"pattern":"Windows3\\.","expected":"Windows 3."},{"pattern":"Windows7","expected":"Windows 7"},{"pattern":"Windows95","expected":"Windows 95"},{"pattern":"Windows98","expected":"Windows 98"},{"pattern":"\\bWindowsMe\\b|\\bWindowsME\\b","expected":"Windows Me"},{"pattern":"\\bWindowsNT\\b","expected":"Windows NT"},{"pattern":"Windows 2003 Server","expected":"Windows Server 2003"},{"pattern":"Windows 2008 Server","expected":"Windows Server 2008"},{"pattern":"\\bWindowsVista\\b","expected":"Windows Vista"},{"pattern":"\\bWindowsXP\\b","expected":"Windows XP"},{"pattern":"([^ースォ])ワード","expected":"$1Word"},{"pattern":"\\bxAuth\\b","expected":"xAuth","flag":"i"},{"pattern":"\\bXcode\\b","expected":"Xcode","flag":"i"},{"pattern":"\\bXML Schema\\b","expected":"XML Schema","flag":"i"},{"pattern":"(?:\\bYAHOO\\b([^!.]))","expected":"Yahoo!$1"},{"pattern":"(?:ヤフー([^!.]))","expected":"Yahoo!$1"},{"pattern":"\\bYahooWidget\\b|Yahoo\\!Widget|Yahoo\\! Widget|\\bYahooGadget\\b|Yahoo\\!Gadget|Yahoo\\! Gadget","expected":"Yahoo!ウィジェット"},{"pattern":"\\bYoutube\\b|\\byoutube\\b","expected":"YouTube"},{"pattern":"\\bYSlow\\b","expected":"YSlow","flag":"i"},{"pattern":"\\bZIPファイル\\b","expected":"ZIPファイル","flag":"i"},{"pattern":"オライリージャパン([^・])|オライリー([^・])","expected":"オライリー・ジャパン$1"},{"pattern":"ソフトバンククリエイティブ","expected":"ソフトバンク クリエイティブ"},{"pattern":"ピアソンエデュケーション([^・])","expected":"ピアソン・エデュケーション$1"},{"pattern":"(?:([^\\/.])クイックウェブ)|(?:クイックウェブ([^\\/.]))","expected":"$1qwikWeb$2"},{"pattern":"(?:([^\\/.])クイックWeb)|(?:クイックWeb([^\\/.]))","expected":"$1qwikWeb$2"},{"pattern":"(?:([^.])C2ウィキ)|(?:C2ウィキ([^.]))","expected":"$1C2 Wiki$2"},{"pattern":"(?:([^.])サーチウィキ)|(?:サーチウィキ([^.]))","expected":"$1SearchWiki$2"},{"pattern":"(?:([^.])サーチWiki)|(?:サーチWiki([^.]))","expected":"$1SearchWiki$2"},{"pattern":"(?:([^.])メディアウィキ)|(?:メディアウィキ([^.]))","expected":"$1MediaWiki$2"},{"pattern":"(?:([^.])メディアWiki)|(?:メディアWiki([^.]))","expected":"$1MediaWiki$2"},{"pattern":"(?:([^.])ハイパーパール)|(?:ハイパーパール([^.]))","expected":"$1HyperPerl$2"},{"pattern":"(?:([^.])ヌーペディア)|(?:ヌーペディア([^.]))","expected":"$1Nupedia$2"},{"pattern":"(?:([^.])ユースモッドウィキ)|(?:ユースモッドウィキ([^.]))","expected":"$1UseModWiki$2"},{"pattern":"(?:([^.])ユースモッドWiki)|(?:ユースモッドWiki([^.]))","expected":"$1UseModWiki$2"},{"pattern":"(?:([^.])ティドリーウィキ)|(?:ティドリーウィキ([^.]))","expected":"$1TiddlyWiki$2"},{"pattern":"(?:([^.])ティドリーWiki)|(?:ティドリーWiki([^.]))","expected":"$1TiddlyWiki$2"},{"pattern":"(?:([^.])ミートボールウィキ)|(?:ミートボールウィキ([^.]))","expected":"$1MeatballWiki$2"},{"pattern":"(?:([^.])ミートボールWiki)|(?:ミートボールWiki([^.]))","expected":"$1MeatballWiki$2"},{"pattern":"(?:([^\\/.])ウィキウィキウェブ)|(?:ウィキウィキウェブ([^\\/.]))","expected":"$1WikiWikiWeb$2"},{"pattern":"(?:([^\\/.])ウィキウィキWeb)|(?:ウィキウィキWeb([^\\/.]))","expected":"$1WikiWikiWeb$2"},{"pattern":"(?:([^.])ウィキア)|(?:ウィキア([^.]))","expected":"$1Wikia$2"},{"pattern":"(?:([^.])Wikiア)|(?:Wikiア([^.]))","expected":"$1Wikia$2"},{"pattern":"(?:([^\\/.])ウィキメディア)|(?:ウィキメディア([^\\/.]))","expected":"$1Wikimedia$2"},{"pattern":"(?:([^\\/.])Wikiメディア)|(?:Wikiメディア([^\\/.]))","expected":"$1Wikimedia$2"},{"pattern":"(?:([^\\/.])\\bWikiPedia)|(?:WikiPedia\\b([^\\/.]))","expected":"$1Wikipedia$2"},{"pattern":"(?:([^\\/.])ウィキペディア)|(?:ウィキペディア([^\\/.]))","expected":"$1Wikipedia$2"},{"pattern":"(?:([^\\/.])Wikiベース)|(?:Wikiベース([^\\/.]))","expected":"$1WikiBase$2"},{"pattern":"(?:([^\\/.])ウィキベース)|(?:ウィキベース([^\\/.]))","expected":"$1WikiBase$2"},{"pattern":"(?:([^\\/.])\\bwiki)|(?:wiki\\b([^\\/.]))","expected":"$1Wiki$2"},{"pattern":"(?:([^\\/.])ウィキ)|(?:ウィキ([^\\/.]))","expected":"$1Wiki$2"},{"pattern":"Actionクラス","expected":"アクションクラス"},{"pattern":"\\bActionListener\\b|\\bAction Listener\\b|\\bActionListener\\b","expected":"アクションリスナ"},{"pattern":"Actionマッピング|\\bAction Mapping\\b","expected":"アクションマッピング"},{"pattern":"\\bActionFormBean\\b|\\bActionFormBeans\\b|\\bActionForm Bean\\b","expected":"アクションフォームBean"},{"pattern":"\\bAction Form\\b|\\bActionForm\\b","expected":"アクションフォーム"},{"pattern":"\\bActionServlet\\b|\\bAction Servlet\\b|Actionサーブレット","expected":"アクションサーブレット"},{"pattern":"\\bForm Bean\\b|フォームビーン","expected":"フォームBean"},{"pattern":"Requestオブジェクト","expected":"リクエストオブジェクト"},{"pattern":"Responseオブジェクト","expected":"レスポンスオブジェクト"},{"pattern":"Sessionオブジェクト","expected":"セッションオブジェクト"},{"pattern":"インタフェイス|インターフェイス|インターフェース|インターフェィス","expected":"インタフェース"},{"pattern":"Remoteインタフェース","expected":"リモートインタフェース"},{"pattern":"Homeインタフェース","expected":"ホームインタフェース"},{"pattern":"Localインタフェース","expected":"ローカルインタフェース"},{"pattern":"Serviceインタフェース","expected":"サービスインタフェース"},{"pattern":"\\bEntity Bean\\b|\\bentity bean\\b","expected":"エンティティBean"},{"pattern":"\\bsession bean\\b|\\bSession Bean\\b","expected":"セッションBean"},{"pattern":"%([^0123456789])","expected":"％$1"},{"pattern":"([ァ-ヶ])・","expected":"$1"},{"pattern":"・・・|･･･","expected":"…"},{"pattern":"――|─―|―─","expected":"──"},{"pattern":"！？","expected":"!?"},{"pattern":"？！","expected":"?!"},{"pattern":"！！","expected":"!!"},{"pattern":"？？","expected":"??"},{"pattern":"！？([^\\n\\s「」『』（）［］])","expected":"!? $1"},{"pattern":"\\!\\?([^\\n\\s「」『』（）［］])","expected":"!? $1"},{"pattern":"？！([^\\n\\s「」『』（）［］])","expected":"?! $1"},{"pattern":"\\?\\!([^\\n\\s「」『』（）［］])","expected":"?! $1"},{"pattern":"？？([^\\n\\s「」『』（）［］])","expected":"?? $1"},{"pattern":"\\?\\?([^\\n\\s「」『』（）［］])","expected":"?? $1"},{"pattern":"！([^\\n\\s「」『』（）［］])","expected":"！ $1"},{"pattern":"？([^\\n\\s「」『』（）［］★])","expected":"？ $1"},{"pattern":"([0-9])x([0-9])","expected":"$1×$2"},{"pattern":"⑩|10．","expected":"（10）"},{"pattern":"①|1．","expected":"（1）"},{"pattern":"②|2．","expected":"（2）"},{"pattern":"③|3．","expected":"（3）"},{"pattern":"④|4．","expected":"（4）"},{"pattern":"⑤|5．","expected":"（5）"},{"pattern":"⑥|6．","expected":"（6）"},{"pattern":"⑦|7．","expected":"（7）"},{"pattern":"⑧|8．","expected":"（8）"},{"pattern":"⑨|9．","expected":"（9）"},{"pattern":"Ⅳ","expected":"IV"},{"pattern":"ⅳ","expected":"iv"},{"pattern":"Ⅵ","expected":"VI"},{"pattern":"ⅵ","expected":"vi"},{"pattern":"Ⅶ","expected":"VII"},{"pattern":"ⅶ","expected":"vii"},{"pattern":"Ⅷ","expected":"VIII"},{"pattern":"ⅷ","expected":"viii"},{"pattern":"Ⅸ","expected":"IX"},{"pattern":"ⅸ","expected":"ix"},{"pattern":"（|（","expected":"（"},{"pattern":"） | ）","expected":"）"},{"pattern":"．（|。（","expected":"（"},{"pattern":"。）","expected":"）。"},{"pattern":"、）","expected":"）、"},{"pattern":"）(\\n)","expected":"）。$1"},{"pattern":"｢","expected":"「"},{"pattern":"｣","expected":"」"},{"pattern":"」、「","expected":"」「"},{"pattern":"。」","expected":"」"},{"pattern":"([\\d十百千万])Mバイト|([\\d十百千万])メガバイト","expected":"$1MB"},{"pattern":"([\\d十百千万])Gバイト|([\\d十百千万])ギガバイト","expected":"$1GB"},{"pattern":"([\\d十百千万])Kバイト|([\\d十百千万])キロバイト","expected":"$1KB"},{"pattern":"([\\d十百千万])Tバイト|([\\d十百千万])テラバイト","expected":"$1TB"},{"pattern":"([\\d十百千万])Pバイト|([\\d十百千万])ペタバイト","expected":"$1PB"},{"pattern":"([\\d十百千万])\\bpx\\b|([\\d十百千万])\\bpixel\\b","expected":"$1ピクセル"},{"pattern":"([\\d十百千万])\\bbit\\b|([\\d十百千万])\\bBit\\b","expected":"$1ビット"},{"pattern":"([\\d十百千万])\\bKbps\\b","expected":"$1kbps"},{"pattern":"([\\d十百千万])\\bKHz\\b|([\\d十百千万])\\bKhz\\b|([\\d十百千万])\\bkhz\\b|([\\d十百千万])\\bKHZ\\b|([\\d十百千万])\\bkHZ\\b","expected":"$1kHz"},{"pattern":"([\\d十百千万])\\bhz\\b|([\\d十百千万])\\bHZ\\b","expected":"$1Hz"},{"pattern":"\\bFluxbox\\b","expected":"Flexbox"},{"pattern":"[PpＰｐ][OoＯｏ][SsＳｓ][TtＴｔ][CcＣｃ][SsＳｓ][SsＳｓ]","expected":"PostCSS"},{"pattern":"(?:ECMAScript([0-9]+)|ECMA Script([0-9]+))","expected":"ECMAScript $1"},{"pattern":"ECMA標準","expected":"Ecma標準"},{"pattern":"\\bES next\\b","expected":"ES.next"},{"pattern":"[EeＥｅ][SsＳｓ][6６] [CcＣｃ][LlＬｌ][AaＡａ][SsＳｓ][SsＳｓ][EeＥｅ][SsＳｓ]","expected":"ES6 Classes"},{"pattern":"(?:WebComponents|web components|Web components)","expected":"Web Components"},{"pattern":"\\blocalstorage\\b","expected":"localStorage"},{"pattern":"\\bsession storage\\b|\\bsessionstorage\\b","expected":"sessionStorage"},{"pattern":"\\bHTML Import\\b","expected":"HTML Imports"},{"pattern":"\\b[JjＪｊ][AaＡａ][VvＶｖ][AaＡａ][SsＳｓ][CcＣｃ][RrＲｒ][IiＩｉ][PpＰｐ][TtＴｔ]\\b","expected":"JavaScript"},{"pattern":"\\bJava Script\\b","expected":"JavaScript","flag":"i"},{"pattern":"(?:pointer event|pointer events)","expected":"Pointer Events"},{"pattern":"(?:Touch Event|Touch Events)","expected":"Touch Events"},{"pattern":"(?:WebAudio API|Web AudioAPI|Web Audio API)","expected":"Web Audio API"},{"pattern":"[SsＳｓ][EeＥｅ][RrＲｒ][VvＶｖ][IiＩｉ][CcＣｃ][EeＥｅ] [WwＷｗ][OoＯｏ][RrＲｒ][KkＫｋ][EeＥｅ][RrＲｒ]","expected":"Service Worker"},{"pattern":"(?:Template Strings|TemplateStrings)","expected":"Template Strings"},{"pattern":".js([.0-9]+)","expected":".js $1"},{"pattern":"[TtＴｔ][OoＯｏ][DdＤｄ][OoＯｏ][MmＭｍ][VvＶｖ][CcＣｃ]","expected":"TodoMVC"},{"pattern":"(?:Source Map|SourceMap)","expected":"Source Map"},{"pattern":"\\bVirtualDOM\\b|\\bVirtualDom\\b","expected":"Virtual DOM"},{"pattern":"(?:jquery(?!-))","expected":"jQuery"},{"pattern":"(?:redux(?!-))","expected":"Redux"},{"pattern":"[UuＵｕ][NnＮｎ][DdＤｄ][EeＥｅ][RrＲｒ][SsＳｓ][CcＣｃ][OoＯｏ][RrＲｒ][EeＥｅ].[JjＪｊ][SsＳｓ]","expected":"Underscore.js"},{"pattern":"\\b[AaＡａ][NnＮｎ][GgＧｇ][UuＵｕ][LlＬｌ][AaＡａ][RrＲｒ]\\b","expected":"Angular"},{"pattern":"(?:Angular\\.js|angularjs)","expected":"AngularJS"},{"pattern":"[EeＥｅ][MmＭｍ][BbＢｂ][EeＥｅ][RrＲｒ].[JjＪｊ][SsＳｓ]","expected":"Ember.js"},{"pattern":"(?:EmberJS)","expected":"Ember.js"},{"pattern":"[LlＬｌ][EeＥｅ][AaＡａ][NnＮｎ][PpＰｐ][UuＵｕ][BbＢｂ]","expected":"Leanpub"},{"pattern":"[OoＯｏ][RrＲｒ][EeＥｅ][IiＩｉ][LlＬｌ][LlＬｌ][YyＹｙ]","expected":"Oreilly"},{"pattern":"(?:SauceLabs)","expected":"Sauce Labs"},{"pattern":"(?:TravisCI)","expected":"Travis CI"},{"pattern":"(?:HTML5Rocks|HTML5Rock)","expected":"HTML5 Rocks"},{"pattern":"([0-9\\.]+)EAP","expected":"$1 EAP"},{"pattern":"\\bWebDriver\\b","expected":"WebDriver","flag":"i"},{"pattern":"Virtual machine","expected":"Virtual Machine"},{"pattern":"(?:([^\\-\\w])webkit)","expected":"$1WebKit"},{"pattern":"[OoＯｏ][CcＣｃ][AaＡａ][MmＭｍ][LlＬｌ]","expected":"OCaml"},{"pattern":"[WwＷｗ][IiＩｉ][NnＮｎ][DdＤｄ][OoＯｏ][WwＷｗ][SsＳｓ]","expected":"Windows"}]
-},{}],247:[function(require,module,exports){
+},{}],246:[function(require,module,exports){
 /* eslint-disable no-unused-vars */
 // LICENSE : MIT
 "use strict";
@@ -34237,7 +33969,7 @@ var MarkdownProcessor = exports.MarkdownProcessor = function () {
     return MarkdownProcessor;
 }();
 
-},{"@textlint/markdown-to-ast":42}],248:[function(require,module,exports){
+},{"@textlint/markdown-to-ast":42}],247:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -34247,7 +33979,7 @@ module.exports = {
     Processor: _MarkdownProcessor.MarkdownProcessor
 };
 
-},{"./MarkdownProcessor":247}],249:[function(require,module,exports){
+},{"./MarkdownProcessor":246}],248:[function(require,module,exports){
 // MIT © 2016 azu
 "use strict";
 
@@ -34396,7 +34128,7 @@ module.exports = {
     fixer: reporter
 };
 
-},{"chrono-node":58,"moment":173}],250:[function(require,module,exports){
+},{"chrono-node":58,"moment":172}],249:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -34524,7 +34256,7 @@ var IgnoreNodeManger = function () {
 
 exports.default = IgnoreNodeManger;
 
-},{"unist-util-visit":280}],251:[function(require,module,exports){
+},{"unist-util-visit":279}],250:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -34543,7 +34275,7 @@ module.exports = {
     RuleHelper: _textlintRuleHelper2.default
 };
 
-},{"./IgnoreNodeManger":250,"./textlint-rule-helper":252}],252:[function(require,module,exports){
+},{"./IgnoreNodeManger":249,"./textlint-rule-helper":251}],251:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 /**
@@ -34619,7 +34351,7 @@ var RuleHelper = function () {
 
 exports.default = RuleHelper;
 
-},{}],253:[function(require,module,exports){
+},{}],252:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -34731,7 +34463,7 @@ module.exports = {
     fixer: reporter
 };
 
-},{"check-ends-with-period":57,"textlint-rule-helper":255}],254:[function(require,module,exports){
+},{"check-ends-with-period":57,"textlint-rule-helper":254}],253:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -34859,7 +34591,7 @@ var IgnoreNodeManager = function () {
 
 exports.default = IgnoreNodeManager;
 
-},{"unist-util-visit":280}],255:[function(require,module,exports){
+},{"unist-util-visit":279}],254:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -34878,9 +34610,9 @@ module.exports = {
     RuleHelper: _textlintRuleHelper2.default
 };
 
-},{"./IgnoreNodeManager":254,"./textlint-rule-helper":256}],256:[function(require,module,exports){
-arguments[4][252][0].apply(exports,arguments)
-},{"dup":252}],257:[function(require,module,exports){
+},{"./IgnoreNodeManager":253,"./textlint-rule-helper":255}],255:[function(require,module,exports){
+arguments[4][251][0].apply(exports,arguments)
+},{"dup":251}],256:[function(require,module,exports){
 // MIT © 2017 azu
 "use strict";
 
@@ -34996,7 +34728,7 @@ var report = function report(context) {
 
 module.exports = report;
 
-},{"escape-string-regexp":142,"match-index":166,"regx":185}],258:[function(require,module,exports){
+},{"escape-string-regexp":142,"match-index":165,"regx":184}],257:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", {
@@ -35089,7 +34821,7 @@ exports["default"] = function (context) {
 
 module.exports = exports["default"];
 
-},{"object-assign":175,"textlint-rule-helper":251}],259:[function(require,module,exports){
+},{"object-assign":174,"textlint-rule-helper":250}],258:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", {
@@ -35182,7 +34914,7 @@ function noMixDearuDesumasu(context) {
 
 module.exports = exports["default"];
 
-},{"analyze-desumasu-dearu":43,"textlint-rule-helper":251}],260:[function(require,module,exports){
+},{"analyze-desumasu-dearu":43,"textlint-rule-helper":250}],259:[function(require,module,exports){
 // MIT © 2017 azu
 "use strict";
 
@@ -35262,13 +34994,13 @@ module.exports = {
     fixer: reporter
 };
 
-},{"match-index":166,"moji":171,"textlint-rule-helper":262}],261:[function(require,module,exports){
+},{"match-index":165,"moji":170,"textlint-rule-helper":261}],260:[function(require,module,exports){
+arguments[4][253][0].apply(exports,arguments)
+},{"dup":253,"unist-util-visit":279}],261:[function(require,module,exports){
 arguments[4][254][0].apply(exports,arguments)
-},{"dup":254,"unist-util-visit":280}],262:[function(require,module,exports){
-arguments[4][255][0].apply(exports,arguments)
-},{"./IgnoreNodeManager":261,"./textlint-rule-helper":263,"dup":255}],263:[function(require,module,exports){
-arguments[4][252][0].apply(exports,arguments)
-},{"dup":252}],264:[function(require,module,exports){
+},{"./IgnoreNodeManager":260,"./textlint-rule-helper":262,"dup":254}],262:[function(require,module,exports){
+arguments[4][251][0].apply(exports,arguments)
+},{"dup":251}],263:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -35315,7 +35047,7 @@ module.exports = {
     fixer: reporter
 };
 
-},{"match-index":166,"textlint-rule-helper":251,"unorm":281}],265:[function(require,module,exports){
+},{"match-index":165,"textlint-rule-helper":250,"unorm":280}],264:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 Object.defineProperty(exports, "__esModule", {
@@ -35367,7 +35099,7 @@ module.exports = exports["default"];
     - [ ] Todo
 */
 
-},{"textlint-rule-helper":251}],266:[function(require,module,exports){
+},{"textlint-rule-helper":250}],265:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 
@@ -35437,13 +35169,13 @@ var defaultOptions = {
 };
 module.exports = exports["default"];
 
-},{"mdast-util-to-string":167,"sentence-splitter":241,"textlint-rule-helper":268}],267:[function(require,module,exports){
+},{"mdast-util-to-string":166,"sentence-splitter":240,"textlint-rule-helper":267}],266:[function(require,module,exports){
+arguments[4][253][0].apply(exports,arguments)
+},{"dup":253,"unist-util-visit":279}],267:[function(require,module,exports){
 arguments[4][254][0].apply(exports,arguments)
-},{"dup":254,"unist-util-visit":280}],268:[function(require,module,exports){
-arguments[4][255][0].apply(exports,arguments)
-},{"./IgnoreNodeManager":267,"./textlint-rule-helper":269,"dup":255}],269:[function(require,module,exports){
-arguments[4][252][0].apply(exports,arguments)
-},{"dup":252}],270:[function(require,module,exports){
+},{"./IgnoreNodeManager":266,"./textlint-rule-helper":268,"dup":254}],268:[function(require,module,exports){
+arguments[4][251][0].apply(exports,arguments)
+},{"dup":251}],269:[function(require,module,exports){
 // LICENSE : MIT
 "use strict";
 var RuleHelper = require("textlint-rule-helper").RuleHelper;
@@ -35478,7 +35210,7 @@ module.exports = {
     fixer: reporter
 };
 
-},{"spellcheck-technical-word":242,"textlint-rule-helper":251}],271:[function(require,module,exports){
+},{"spellcheck-technical-word":241,"textlint-rule-helper":250}],270:[function(require,module,exports){
 (function (setImmediate,clearImmediate){
 var nextTick = require('process/browser.js').nextTick;
 var apply = Function.prototype.apply;
@@ -35557,7 +35289,7 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
   delete immediateIds[id];
 };
 }).call(this,require("timers").setImmediate,require("timers").clearImmediate)
-},{"process/browser.js":180,"timers":271}],272:[function(require,module,exports){
+},{"process/browser.js":179,"timers":270}],271:[function(require,module,exports){
 var traverse = module.exports = function (obj) {
     return new Traverse(obj);
 };
@@ -35873,7 +35605,7 @@ var hasOwnProperty = Object.hasOwnProperty || function (obj, key) {
     return key in obj;
 };
 
-},{}],273:[function(require,module,exports){
+},{}],272:[function(require,module,exports){
 'use strict';
 
 module.exports = trimTrailingLines;
@@ -35890,7 +35622,7 @@ function trimTrailingLines(value) {
   return val.slice(0, index + 1);
 }
 
-},{}],274:[function(require,module,exports){
+},{}],273:[function(require,module,exports){
 
 exports = module.exports = trim;
 
@@ -35906,7 +35638,7 @@ exports.right = function(str){
   return str.replace(/\s*$/, '');
 };
 
-},{}],275:[function(require,module,exports){
+},{}],274:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -36084,7 +35816,7 @@ function wrap(fn, next) {
   }
 }
 
-},{}],276:[function(require,module,exports){
+},{}],275:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2015 Titus Wormer
@@ -36153,7 +35885,7 @@ function unherit(Super) {
   }
 }
 
-},{"inherits":151,"xtend":289}],277:[function(require,module,exports){
+},{"inherits":150,"xtend":289}],276:[function(require,module,exports){
 'use strict'
 
 /* Dependencies. */
@@ -36621,7 +36353,7 @@ function assertDone(name, asyncName, complete) {
   }
 }
 
-},{"bail":52,"extend":144,"is-plain-obj":159,"trough":275,"vfile":285,"x-is-string":288}],278:[function(require,module,exports){
+},{"bail":52,"extend":143,"is-plain-obj":158,"trough":274,"vfile":284,"x-is-string":288}],277:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -36665,7 +36397,7 @@ function soft(node) {
   node.position = undefined;
 }
 
-},{"unist-util-visit":280}],279:[function(require,module,exports){
+},{"unist-util-visit":279}],278:[function(require,module,exports){
 'use strict';
 
 var own = {}.hasOwnProperty;
@@ -36717,7 +36449,7 @@ function index(value) {
   return value && typeof value === 'number' ? value : 1;
 }
 
-},{}],280:[function(require,module,exports){
+},{}],279:[function(require,module,exports){
 'use strict';
 
 /* Expose. */
@@ -36774,7 +36506,7 @@ function visit(tree, type, visitor, reverse) {
   }
 }
 
-},{}],281:[function(require,module,exports){
+},{}],280:[function(require,module,exports){
 (function (root) {
    "use strict";
 
@@ -37218,7 +36950,7 @@ UChar.udata={
    }
 }(this));
 
-},{}],282:[function(require,module,exports){
+},{}],281:[function(require,module,exports){
 /**
  * @author Titus Wormer
  * @copyright 2016 Titus Wormer
@@ -37343,7 +37075,7 @@ function indices(value) {
   return result;
 }
 
-},{}],283:[function(require,module,exports){
+},{}],282:[function(require,module,exports){
 'use strict';
 
 var stringify = require('unist-util-stringify-position');
@@ -37439,7 +37171,7 @@ function parseOrigin(origin) {
   return result;
 }
 
-},{"unist-util-stringify-position":279}],284:[function(require,module,exports){
+},{"unist-util-stringify-position":278}],283:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -37612,7 +37344,7 @@ function assertPath(path, name) {
 }
 
 }).call(this,require('_process'))
-},{"_process":180,"is-buffer":154,"path":179,"replace-ext":240}],285:[function(require,module,exports){
+},{"_process":179,"is-buffer":153,"path":178,"replace-ext":239}],284:[function(require,module,exports){
 'use strict';
 
 var VMessage = require('vfile-message');
@@ -37667,7 +37399,532 @@ function info() {
   return message;
 }
 
-},{"./core.js":284,"vfile-message":283}],286:[function(require,module,exports){
+},{"./core.js":283,"vfile-message":282}],285:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var objectCreate = Object.create || objectCreatePolyfill
+var objectKeys = Object.keys || objectKeysPolyfill
+var bind = Function.prototype.bind || functionBindPolyfill
+
+function EventEmitter() {
+  if (!this._events || !Object.prototype.hasOwnProperty.call(this, '_events')) {
+    this._events = objectCreate(null);
+    this._eventsCount = 0;
+  }
+
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+var defaultMaxListeners = 10;
+
+var hasDefineProperty;
+try {
+  var o = {};
+  if (Object.defineProperty) Object.defineProperty(o, 'x', { value: 0 });
+  hasDefineProperty = o.x === 0;
+} catch (err) { hasDefineProperty = false }
+if (hasDefineProperty) {
+  Object.defineProperty(EventEmitter, 'defaultMaxListeners', {
+    enumerable: true,
+    get: function() {
+      return defaultMaxListeners;
+    },
+    set: function(arg) {
+      // check whether the input is a positive number (whose value is zero or
+      // greater and not a NaN).
+      if (typeof arg !== 'number' || arg < 0 || arg !== arg)
+        throw new TypeError('"defaultMaxListeners" must be a positive number');
+      defaultMaxListeners = arg;
+    }
+  });
+} else {
+  EventEmitter.defaultMaxListeners = defaultMaxListeners;
+}
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function setMaxListeners(n) {
+  if (typeof n !== 'number' || n < 0 || isNaN(n))
+    throw new TypeError('"n" argument must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+function $getMaxListeners(that) {
+  if (that._maxListeners === undefined)
+    return EventEmitter.defaultMaxListeners;
+  return that._maxListeners;
+}
+
+EventEmitter.prototype.getMaxListeners = function getMaxListeners() {
+  return $getMaxListeners(this);
+};
+
+// These standalone emit* functions are used to optimize calling of event
+// handlers for fast cases because emit() itself often has a variable number of
+// arguments and can be deoptimized because of that. These functions always have
+// the same number of arguments and thus do not get deoptimized, so the code
+// inside them can execute faster.
+function emitNone(handler, isFn, self) {
+  if (isFn)
+    handler.call(self);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self);
+  }
+}
+function emitOne(handler, isFn, self, arg1) {
+  if (isFn)
+    handler.call(self, arg1);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self, arg1);
+  }
+}
+function emitTwo(handler, isFn, self, arg1, arg2) {
+  if (isFn)
+    handler.call(self, arg1, arg2);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self, arg1, arg2);
+  }
+}
+function emitThree(handler, isFn, self, arg1, arg2, arg3) {
+  if (isFn)
+    handler.call(self, arg1, arg2, arg3);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].call(self, arg1, arg2, arg3);
+  }
+}
+
+function emitMany(handler, isFn, self, args) {
+  if (isFn)
+    handler.apply(self, args);
+  else {
+    var len = handler.length;
+    var listeners = arrayClone(handler, len);
+    for (var i = 0; i < len; ++i)
+      listeners[i].apply(self, args);
+  }
+}
+
+EventEmitter.prototype.emit = function emit(type) {
+  var er, handler, len, args, i, events;
+  var doError = (type === 'error');
+
+  events = this._events;
+  if (events)
+    doError = (doError && events.error == null);
+  else if (!doError)
+    return false;
+
+  // If there is no 'error' event listener then throw.
+  if (doError) {
+    if (arguments.length > 1)
+      er = arguments[1];
+    if (er instanceof Error) {
+      throw er; // Unhandled 'error' event
+    } else {
+      // At least give some kind of context to the user
+      var err = new Error('Unhandled "error" event. (' + er + ')');
+      err.context = er;
+      throw err;
+    }
+    return false;
+  }
+
+  handler = events[type];
+
+  if (!handler)
+    return false;
+
+  var isFn = typeof handler === 'function';
+  len = arguments.length;
+  switch (len) {
+      // fast cases
+    case 1:
+      emitNone(handler, isFn, this);
+      break;
+    case 2:
+      emitOne(handler, isFn, this, arguments[1]);
+      break;
+    case 3:
+      emitTwo(handler, isFn, this, arguments[1], arguments[2]);
+      break;
+    case 4:
+      emitThree(handler, isFn, this, arguments[1], arguments[2], arguments[3]);
+      break;
+      // slower
+    default:
+      args = new Array(len - 1);
+      for (i = 1; i < len; i++)
+        args[i - 1] = arguments[i];
+      emitMany(handler, isFn, this, args);
+  }
+
+  return true;
+};
+
+function _addListener(target, type, listener, prepend) {
+  var m;
+  var events;
+  var existing;
+
+  if (typeof listener !== 'function')
+    throw new TypeError('"listener" argument must be a function');
+
+  events = target._events;
+  if (!events) {
+    events = target._events = objectCreate(null);
+    target._eventsCount = 0;
+  } else {
+    // To avoid recursion in the case that type === "newListener"! Before
+    // adding it to the listeners, first emit "newListener".
+    if (events.newListener) {
+      target.emit('newListener', type,
+          listener.listener ? listener.listener : listener);
+
+      // Re-assign `events` because a newListener handler could have caused the
+      // this._events to be assigned to a new object
+      events = target._events;
+    }
+    existing = events[type];
+  }
+
+  if (!existing) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    existing = events[type] = listener;
+    ++target._eventsCount;
+  } else {
+    if (typeof existing === 'function') {
+      // Adding the second element, need to change to array.
+      existing = events[type] =
+          prepend ? [listener, existing] : [existing, listener];
+    } else {
+      // If we've already got an array, just append.
+      if (prepend) {
+        existing.unshift(listener);
+      } else {
+        existing.push(listener);
+      }
+    }
+
+    // Check for listener leak
+    if (!existing.warned) {
+      m = $getMaxListeners(target);
+      if (m && m > 0 && existing.length > m) {
+        existing.warned = true;
+        var w = new Error('Possible EventEmitter memory leak detected. ' +
+            existing.length + ' "' + String(type) + '" listeners ' +
+            'added. Use emitter.setMaxListeners() to ' +
+            'increase limit.');
+        w.name = 'MaxListenersExceededWarning';
+        w.emitter = target;
+        w.type = type;
+        w.count = existing.length;
+        if (typeof console === 'object' && console.warn) {
+          console.warn('%s: %s', w.name, w.message);
+        }
+      }
+    }
+  }
+
+  return target;
+}
+
+EventEmitter.prototype.addListener = function addListener(type, listener) {
+  return _addListener(this, type, listener, false);
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.prependListener =
+    function prependListener(type, listener) {
+      return _addListener(this, type, listener, true);
+    };
+
+function onceWrapper() {
+  if (!this.fired) {
+    this.target.removeListener(this.type, this.wrapFn);
+    this.fired = true;
+    switch (arguments.length) {
+      case 0:
+        return this.listener.call(this.target);
+      case 1:
+        return this.listener.call(this.target, arguments[0]);
+      case 2:
+        return this.listener.call(this.target, arguments[0], arguments[1]);
+      case 3:
+        return this.listener.call(this.target, arguments[0], arguments[1],
+            arguments[2]);
+      default:
+        var args = new Array(arguments.length);
+        for (var i = 0; i < args.length; ++i)
+          args[i] = arguments[i];
+        this.listener.apply(this.target, args);
+    }
+  }
+}
+
+function _onceWrap(target, type, listener) {
+  var state = { fired: false, wrapFn: undefined, target: target, type: type, listener: listener };
+  var wrapped = bind.call(onceWrapper, state);
+  wrapped.listener = listener;
+  state.wrapFn = wrapped;
+  return wrapped;
+}
+
+EventEmitter.prototype.once = function once(type, listener) {
+  if (typeof listener !== 'function')
+    throw new TypeError('"listener" argument must be a function');
+  this.on(type, _onceWrap(this, type, listener));
+  return this;
+};
+
+EventEmitter.prototype.prependOnceListener =
+    function prependOnceListener(type, listener) {
+      if (typeof listener !== 'function')
+        throw new TypeError('"listener" argument must be a function');
+      this.prependListener(type, _onceWrap(this, type, listener));
+      return this;
+    };
+
+// Emits a 'removeListener' event if and only if the listener was removed.
+EventEmitter.prototype.removeListener =
+    function removeListener(type, listener) {
+      var list, events, position, i, originalListener;
+
+      if (typeof listener !== 'function')
+        throw new TypeError('"listener" argument must be a function');
+
+      events = this._events;
+      if (!events)
+        return this;
+
+      list = events[type];
+      if (!list)
+        return this;
+
+      if (list === listener || list.listener === listener) {
+        if (--this._eventsCount === 0)
+          this._events = objectCreate(null);
+        else {
+          delete events[type];
+          if (events.removeListener)
+            this.emit('removeListener', type, list.listener || listener);
+        }
+      } else if (typeof list !== 'function') {
+        position = -1;
+
+        for (i = list.length - 1; i >= 0; i--) {
+          if (list[i] === listener || list[i].listener === listener) {
+            originalListener = list[i].listener;
+            position = i;
+            break;
+          }
+        }
+
+        if (position < 0)
+          return this;
+
+        if (position === 0)
+          list.shift();
+        else
+          spliceOne(list, position);
+
+        if (list.length === 1)
+          events[type] = list[0];
+
+        if (events.removeListener)
+          this.emit('removeListener', type, originalListener || listener);
+      }
+
+      return this;
+    };
+
+EventEmitter.prototype.removeAllListeners =
+    function removeAllListeners(type) {
+      var listeners, events, i;
+
+      events = this._events;
+      if (!events)
+        return this;
+
+      // not listening for removeListener, no need to emit
+      if (!events.removeListener) {
+        if (arguments.length === 0) {
+          this._events = objectCreate(null);
+          this._eventsCount = 0;
+        } else if (events[type]) {
+          if (--this._eventsCount === 0)
+            this._events = objectCreate(null);
+          else
+            delete events[type];
+        }
+        return this;
+      }
+
+      // emit removeListener for all listeners on all events
+      if (arguments.length === 0) {
+        var keys = objectKeys(events);
+        var key;
+        for (i = 0; i < keys.length; ++i) {
+          key = keys[i];
+          if (key === 'removeListener') continue;
+          this.removeAllListeners(key);
+        }
+        this.removeAllListeners('removeListener');
+        this._events = objectCreate(null);
+        this._eventsCount = 0;
+        return this;
+      }
+
+      listeners = events[type];
+
+      if (typeof listeners === 'function') {
+        this.removeListener(type, listeners);
+      } else if (listeners) {
+        // LIFO order
+        for (i = listeners.length - 1; i >= 0; i--) {
+          this.removeListener(type, listeners[i]);
+        }
+      }
+
+      return this;
+    };
+
+function _listeners(target, type, unwrap) {
+  var events = target._events;
+
+  if (!events)
+    return [];
+
+  var evlistener = events[type];
+  if (!evlistener)
+    return [];
+
+  if (typeof evlistener === 'function')
+    return unwrap ? [evlistener.listener || evlistener] : [evlistener];
+
+  return unwrap ? unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+}
+
+EventEmitter.prototype.listeners = function listeners(type) {
+  return _listeners(this, type, true);
+};
+
+EventEmitter.prototype.rawListeners = function rawListeners(type) {
+  return _listeners(this, type, false);
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  if (typeof emitter.listenerCount === 'function') {
+    return emitter.listenerCount(type);
+  } else {
+    return listenerCount.call(emitter, type);
+  }
+};
+
+EventEmitter.prototype.listenerCount = listenerCount;
+function listenerCount(type) {
+  var events = this._events;
+
+  if (events) {
+    var evlistener = events[type];
+
+    if (typeof evlistener === 'function') {
+      return 1;
+    } else if (evlistener) {
+      return evlistener.length;
+    }
+  }
+
+  return 0;
+}
+
+EventEmitter.prototype.eventNames = function eventNames() {
+  return this._eventsCount > 0 ? Reflect.ownKeys(this._events) : [];
+};
+
+// About 1.5x faster than the two-arg version of Array#splice().
+function spliceOne(list, index) {
+  for (var i = index, k = i + 1, n = list.length; k < n; i += 1, k += 1)
+    list[i] = list[k];
+  list.pop();
+}
+
+function arrayClone(arr, n) {
+  var copy = new Array(n);
+  for (var i = 0; i < n; ++i)
+    copy[i] = arr[i];
+  return copy;
+}
+
+function unwrapListeners(arr) {
+  var ret = new Array(arr.length);
+  for (var i = 0; i < ret.length; ++i) {
+    ret[i] = arr[i].listener || arr[i];
+  }
+  return ret;
+}
+
+function objectCreatePolyfill(proto) {
+  var F = function() {};
+  F.prototype = proto;
+  return new F;
+}
+function objectKeysPolyfill(obj) {
+  var keys = [];
+  for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) {
+    keys.push(k);
+  }
+  return k;
+}
+function functionBindPolyfill(context) {
+  var fn = this;
+  return function () {
+    return fn.apply(context, arguments);
+  };
+}
+
+},{}],286:[function(require,module,exports){
 !function(t,n){"function"==typeof define&&define.amd?define(["word-width"],n):"object"==typeof module&&module.exports?module.exports=n(require("word-width")):t.WordTable=n(t.WordWidth)}(this,function(t){return function(n,o){function e(t,n){var o,e="";for(o=0;o<t;o++)e+=n;return e}function r(n,o,e){c=Math.max(o+1,c),d.length<=o&&d.push(0);for(var r=t(e);p.length<=n;)p.push([]);p[n].length<=o?p[n].push(r):p[n][o]=r,d[o]=Math.max(r,d[o])}function i(){s=tableBody.concat(),s.splice(0,0,y),d=[],c=0;var t,n,o,e,i=s.length;for(t=0;t<i;t++)for(o=s[t],e=o.length,n=0;n<e;n++)r(t,n,o[n])}function u(t){var n,o,r="+";for(n=0;n<c;n++)o=d[n]+2*t[n],r+=e(o,"-"),r+="+";return r}function f(t,n,o){var r,i,u,f,h="|",a=t.length;for(r=0;r<c;r++)r>=a?(h+=e(d[r]+2*n[r]," "),h+="|"):(i=(d[r]-p[o][r])/2,u=Math.floor(i),f=Math.ceil(i),h+=e(n[r]+u," "),h+=t[r],h+=e(n[r]+f," "),h+="|");return h}function h(){var t,n=[],o=s.length;for(t=0;t<c;t++)n.push(Math.ceil(d[t]/4));var e=u(n);for(a=[e],t=0;t<o;t++)a.push(f(s[t],n,t)),a.push(e)}var a,d,c,s,l=!0,p=[],y=n||[];tableBody=o||[],this.string=function(){return this.array().join("\n")},this.array=function(){if(l){if(i(),h(),0===c)return[];l=!1}return a},this.setHeader=function(t){y=t||[],l=!0},this.appendBody=function(t){tableBody.push(t),l=!0},this.setBody=function(t){tableBody=t,l=!0},this.reset=function(){l=!0,y=[],tableBody=[]}}});
 },{"word-width":287}],287:[function(require,module,exports){
 !function(n,e){"object"==typeof module&&module.exports?module.exports=e():n.WordWidth=e()}("undefined"!=typeof window?window:this,function(){function n(n,e){var r,t=0,o=e.length-1;if(n<e[0][0]||n>e[o][1])return 0;for(;o>=t;)if(r=parseInt((t+o)/2),n>e[r][1])t=r+1;else{if(!(n<e[r][0]))return 1;o=r-1}return 0}function e(e){return 0===e||847===e||e>=8203&&e<=8207||8232===e||8233===e||e>=8234&&e<=8238||e>=8288&&e<=8291?0:e<32||e>=127&&e<160?-1:n(e,r)?0:1+n(e,t)}var r=[[768,879],[1155,1161],[1425,1469],[1471,1471],[1473,1474],[1476,1477],[1479,1479],[1552,1562],[1611,1631],[1648,1648],[1750,1756],[1759,1764],[1767,1768],[1770,1773],[1809,1809],[1840,1866],[1958,1968],[2027,2035],[2070,2073],[2075,2083],[2085,2087],[2089,2093],[2137,2139],[2260,2273],[2275,2306],[2362,2362],[2364,2364],[2369,2376],[2381,2381],[2385,2391],[2402,2403],[2433,2433],[2492,2492],[2497,2500],[2509,2509],[2530,2531],[2561,2562],[2620,2620],[2625,2626],[2631,2632],[2635,2637],[2641,2641],[2672,2673],[2677,2677],[2689,2690],[2748,2748],[2753,2757],[2759,2760],[2765,2765],[2786,2787],[2817,2817],[2876,2876],[2879,2879],[2881,2884],[2893,2893],[2902,2902],[2914,2915],[2946,2946],[3008,3008],[3021,3021],[3072,3072],[3134,3136],[3142,3144],[3146,3149],[3157,3158],[3170,3171],[3201,3201],[3260,3260],[3263,3263],[3270,3270],[3276,3277],[3298,3299],[3329,3329],[3393,3396],[3405,3405],[3426,3427],[3530,3530],[3538,3540],[3542,3542],[3633,3633],[3636,3642],[3655,3662],[3761,3761],[3764,3769],[3771,3772],[3784,3789],[3864,3865],[3893,3893],[3895,3895],[3897,3897],[3953,3966],[3968,3972],[3974,3975],[3981,3991],[3993,4028],[4038,4038],[4141,4144],[4146,4151],[4153,4154],[4157,4158],[4184,4185],[4190,4192],[4209,4212],[4226,4226],[4229,4230],[4237,4237],[4253,4253],[4957,4959],[5906,5908],[5938,5940],[5970,5971],[6002,6003],[6068,6069],[6071,6077],[6086,6086],[6089,6099],[6109,6109],[6155,6157],[6277,6278],[6313,6313],[6432,6434],[6439,6440],[6450,6450],[6457,6459],[6679,6680],[6683,6683],[6742,6742],[6744,6750],[6752,6752],[6754,6754],[6757,6764],[6771,6780],[6783,6783],[6832,6846],[6912,6915],[6964,6964],[6966,6970],[6972,6972],[6978,6978],[7019,7027],[7040,7041],[7074,7077],[7080,7081],[7083,7085],[7142,7142],[7144,7145],[7149,7149],[7151,7153],[7212,7219],[7222,7223],[7376,7378],[7380,7392],[7394,7400],[7405,7405],[7412,7412],[7416,7417],[7616,7669],[7675,7679],[8400,8432],[11503,11505],[11647,11647],[11744,11775],[12330,12333],[12441,12442],[42607,42610],[42612,42621],[42654,42655],[42736,42737],[43010,43010],[43014,43014],[43019,43019],[43045,43046],[43204,43205],[43232,43249],[43302,43309],[43335,43345],[43392,43394],[43443,43443],[43446,43449],[43452,43452],[43493,43493],[43561,43566],[43569,43570],[43573,43574],[43587,43587],[43596,43596],[43644,43644],[43696,43696],[43698,43700],[43703,43704],[43710,43711],[43713,43713],[43756,43757],[43766,43766],[44005,44005],[44008,44008],[44013,44013],[64286,64286],[65024,65039],[65056,65071],[66045,66045],[66272,66272],[66422,66426],[68097,68099],[68101,68102],[68108,68111],[68152,68154],[68159,68159],[68325,68326],[69633,69633],[69688,69702],[69759,69761],[69811,69814],[69817,69818],[69888,69890],[69927,69931],[69933,69940],[70003,70003],[70016,70017],[70070,70078],[70090,70092],[70191,70193],[70196,70196],[70198,70199],[70206,70206],[70367,70367],[70371,70378],[70400,70401],[70460,70460],[70464,70464],[70502,70508],[70512,70516],[70712,70719],[70722,70724],[70726,70726],[70835,70840],[70842,70842],[70847,70848],[70850,70851],[71090,71093],[71100,71101],[71103,71104],[71132,71133],[71219,71226],[71229,71229],[71231,71232],[71339,71339],[71341,71341],[71344,71349],[71351,71351],[71453,71455],[71458,71461],[71463,71467],[72752,72758],[72760,72765],[72767,72767],[72850,72871],[72874,72880],[72882,72883],[72885,72886],[92912,92916],[92976,92982],[94095,94098],[113821,113822],[119143,119145],[119163,119170],[119173,119179],[119210,119213],[119362,119364],[121344,121398],[121403,121452],[121461,121461],[121476,121476],[121499,121503],[121505,121519],[122880,122886],[122888,122904],[122907,122913],[122915,122916],[122918,122922],[125136,125142],[125252,125258],[917760,917999]],t=[[4352,4447],[8986,8987],[9001,9002],[9193,9196],[9200,9200],[9203,9203],[9725,9726],[9748,9749],[9800,9811],[9855,9855],[9875,9875],[9889,9889],[9898,9899],[9917,9918],[9924,9925],[9934,9934],[9940,9940],[9962,9962],[9970,9971],[9973,9973],[9978,9978],[9981,9981],[9989,9989],[9994,9995],[10024,10024],[10060,10060],[10062,10062],[10067,10069],[10071,10071],[10133,10135],[10160,10160],[10175,10175],[11035,11036],[11088,11088],[11093,11093],[11904,11929],[11931,12019],[12032,12245],[12272,12283],[12288,12350],[12353,12438],[12441,12543],[12549,12589],[12593,12686],[12688,12730],[12736,12771],[12784,12830],[12832,12871],[12880,13054],[13056,19903],[19968,42124],[42128,42182],[43360,43388],[44032,55203],[63744,64255],[65040,65049],[65072,65106],[65108,65126],[65128,65131],[65281,65376],[65504,65510],[94176,94176],[94208,100332],[100352,101106],[110592,110593],[126980,126980],[127183,127183],[127374,127374],[127377,127386],[127488,127490],[127504,127547],[127552,127560],[127568,127569],[127744,127776],[127789,127797],[127799,127868],[127870,127891],[127904,127946],[127951,127955],[127968,127984],[127988,127988],[127992,128062],[128064,128064],[128066,128252],[128255,128317],[128331,128334],[128336,128359],[128378,128378],[128405,128406],[128420,128420],[128507,128591],[128640,128709],[128716,128716],[128720,128722],[128747,128748],[128756,128758],[129296,129310],[129312,129319],[129328,129328],[129331,129342],[129344,129355],[129360,129374],[129408,129425],[129472,129472],[131072,196605],[196608,262141]];return function(n){for(var r=0,t=n.length,o=0;r<t;r++)o+=e(n.charCodeAt(r));return o}});

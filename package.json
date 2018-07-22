@@ -5,8 +5,8 @@
   "main": "lib/convert.js",
   "scripts": {
     "test": "node test",
-    "build": "browserify index.js -o bundle.js",
-    "dev": "watchify index.js -o bundle.js"
+    "example": "browserify ./examples/index.js -o ./examples/bundle.js",
+    "dev": "watchify ./examples/index.js -o ./examples/bundle.js"
   },
   "author": "hashrock",
   "license": "MIT",
