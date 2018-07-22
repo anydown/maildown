@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.3.0"></a>
+# [1.3.0](https://github.com/anydown/maildown/compare/v1.1.0...v1.3.0) (2018-07-22)
+
+
+### Bug Fixes
+
+* **app:** 最新のtextlintを取り込み、npmパッケージ化できるようにしました. ([16079ae](https://github.com/anydown/maildown/commit/16079ae))
+* add npm package scope ([532631a](https://github.com/anydown/maildown/commit/532631a))
+
+
+### Features
+
+* **option:** Add lineLength option ([0d3029a](https://github.com/anydown/maildown/commit/0d3029a))
+* **textlint:** textlintによる日本語チェック機能を追加しました。 ([4052a53](https://github.com/anydown/maildown/commit/4052a53))
+
+
+
 <a name="1.2.0"></a>
 # [1.2.0](https://github.com/anydown/maildown/compare/v1.1.0...v1.2.0) (2017-05-11)
 
