@@ -1,110 +1,45 @@
-var kaigyo = require("./lib/kaigyo")
-var parse = require("markdown-to-ast").parse;
-var Syntax = require("markdown-to-ast").Syntax;
-var traverse = require("txt-ast-traverse").traverse;
-var VisitorOption = require("txt-ast-traverse").VisitorOption;
+var $input = document.querySelector("#input");
+var $output = document.querySelector("#output");
+var $warning = document.querySelector("#warning");
+var convert = require("./lib/convert");
 
-function convert(input) {
-  var output = []
-  var AST = parse(input);
+$input.value = require("./example");
 
-  traverse(AST, {
-    enter(node) {
-      //console.log("enter", node.type);
-      switch (node.type) {
-        case Syntax.Document:
-          break;
-        case Syntax.Paragraph:
-          output.push(kaigyo(node.children.map(item => item.value).join("")))
-          output.push("")
-          return VisitorOption.Skip;
-          break;
-
-        case Syntax.BlockQuote:
-          break;
-
-        case Syntax.ListItem:
-          break;
-
-        case Syntax.List:
-          var toText = item => item.value
-          if (node.ordered) {
-            var toItem = (listitem, i) => "　（" + (i + 1) + "）" + listitem.children[0].children.map(toText).join("") + "\n"
-            var listtext = node.children.map(toItem).join("")
-            output.push(listtext)
-          } else {
-            var toItem = listitem => "　・" + listitem.children[0].children.map(toText).join("") + "\n"
-            var listtext = node.children.map(toItem).join("")
-            output.push(listtext)
-          }
-          return VisitorOption.Skip;
-          break;
-
-        case Syntax.Header:
-          output.push("")
-          if (node.depth === 1) {
-            output.push("【" + node.children.map(item => item.value).join("") + "】")
-          }
-          if (node.depth >= 2) {
-            output.push("■" + node.children.map(item => item.value).join("") + "")
-          }
-          output.push("")
-          return VisitorOption.Skip;
-
-          break;
-
-        case Syntax.CodeBlock:
-          break;
-
-        case Syntax.Html:
-          break;
-
-        case Syntax.ReferenceDef:
-          break;
-
-        case Syntax.HorizontalRule:
-          output.push("----------------------------------------")
-          break;
-
-        case Syntax.Str:
-          break;
-
-        case Syntax.Break:
-          break;
-
-        case Syntax.Emphasis:
-          break;
-
-        case Syntax.Strong:
-          break;
-
-        case Syntax.Html:
-          break;
-
-        case Syntax.Link:
-          break;
-
-        case Syntax.Image:
-          break;
-
-        case Syntax.Code:
-          break;
-
-        default:
-          break;
-      }
-    },
-    leave(node) {
-      //console.log("leave", node.type);
-    }
-  });
-  return output.join("\n")
-}
-
-var $input = document.querySelector("#input")
-var $output = document.querySelector("#output")
+var TextlintKernel = require("@textlint/kernel").TextlintKernel;
+var textlint = new TextlintKernel();
+var textlintOption = {
+  //ブラウザ上でエラーが出るものはコメントアウト（使いたいのもあるけど・・・）
+  rules: [
+    {ruleId: "textlint-rule-no-todo", rule: require("textlint-rule-no-todo")},
+    {ruleId: "max-ten", rule: require("textlint-rule-max-ten")},
+    // {ruleId: "no-doubled-conjunctive-particle-ga", rule: require("textlint-rule-no-doubled-conjunctive-particle-ga")},
+    {ruleId: "no-mix-dearu-desumasu", rule: require("textlint-rule-no-mix-dearu-desumasu")},
+    {ruleId: "no-nfd", rule: require("textlint-rule-no-nfd")},
+    // {ruleId: "no-double-negative-ja", rule: require("textlint-rule-no-double-negative-ja")},
+    // {ruleId: no-doubled-joshi, rule: require("textlint-rule-no-doubled-joshi")},
+    {ruleId: "sentence-length", rule: require("textlint-rule-sentence-length")},
+    {ruleId: "spellcheck-tech-word", rule: require("textlint-rule-spellcheck-tech-word")},
+    {ruleId: "date-weekday-mismatch", rule: require("textlint-rule-date-weekday-mismatch")},
+    // {ruleId: "ja-no-weak-phrase", rule: require("textlint-rule-ja-no-weak-phrase")},
+    // {ruleId: "ja-no-redundant-expression", rule: require("textlint-rule-ja-no-redundant-expression")},
+    {ruleId: "no-mixed-zenkaku-and-hankaku-alphabet", rule: require("textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet")},
+    // {ruleId: "no-dropping-the-ra", rule: require("textlint-rule-no-dropping-the-ra")},
+    // {ruleId: "no-doubled-conjunction", rule: require("textlint-rule-no-doubled-conjunction")},
+    {ruleId: "ja-no-mixed-period", rule: require("textlint-rule-ja-no-mixed-period")},
+    {ruleId: "ja-unnatural-alphabet", rule: require("textlint-rule-ja-unnatural-alphabet")},
+  ],
+  plugins: [
+    {pluginId: "markdown", plugin: require("textlint-plugin-markdown")}
+  ],
+  ext: ".md",
+};
 
 setInterval(function () {
   $output.value = convert($input.value)
-}, 1000)
 
+  textlint.lintText($input.value, textlintOption).then((result) => {
+    var html = result.messages.map(output=>`<div class="warning__line">${output.line}: ${output.column} ${output.message}</div>`).join("");
+    $warning.innerHTML = html;
+    this.outputs = result.messages;
+  })
+}, 1000);

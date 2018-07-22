@@ -1,31 +1,40 @@
 {
-  "name": "@anydown/maildown",
-  "version": "1.0.2",
-  "description": "Markdownから日本企業っぽいメールに変換します。",
-  "main": "index.js",
+  "name": "maildown",
+  "version": "1.2.0",
+  "description": "",
+  "main": "lib/convert.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test",
     "build": "browserify index.js -o bundle.js",
     "dev": "watchify index.js -o bundle.js"
   },
-  "author": "hashrock",
+  "author": "",
   "license": "MIT",
   "devDependencies": {
     "browserify": "^14.3.0",
-    "markdown-to-ast": "^3.4.0",
-    "txt-ast-traverse": "^1.2.1",
+    "tape": "^4.6.3",
+    "textlint-plugin-markdown": "^4.0.6",
+    "textlint-rule-date-weekday-mismatch": "^1.0.5",
+    "textlint-rule-ja-no-abusage": "^1.2.1",
+    "textlint-rule-ja-no-mixed-period": "^2.0.0",
+    "textlint-rule-ja-no-redundant-expression": "^1.0.3",
+    "textlint-rule-ja-no-weak-phrase": "^1.0.3",
+    "textlint-rule-ja-unnatural-alphabet": "^1.3.0",
+    "textlint-rule-max-ten": "^1.2.2",
+    "textlint-rule-no-doubled-conjunction": "^1.0.2",
+    "textlint-rule-no-doubled-joshi": "^3.5.1",
+    "textlint-rule-no-dropping-the-ra": "^1.1.2",
+    "textlint-rule-no-mix-dearu-desumasu": "^1.4.0",
+    "textlint-rule-no-mixed-zenkaku-and-hankaku-alphabet": "^1.0.1",
+    "textlint-rule-no-todo": "^1.0.3",
+    "textlint-rule-preset-japanese": "^1.3.4",
+    "textlint-rule-spellcheck-tech-word": "^4.1.0",
     "watchify": "^3.9.0"
   },
-  "directories": {
-    "lib": "lib"
-  },
-  "dependencies": {},
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/anydown/maildown.git"
-  },
-  "bugs": {
-    "url": "https://github.com/anydown/maildown/issues"
-  },
-  "homepage": "https://github.com/anydown/maildown#readme"
+  "dependencies": {
+    "@textlint/ast-traverse": "^2.0.8",
+    "@textlint/markdown-to-ast": "^6.0.8",
+    "textlint": "^10.2.1",
+    "word-table": "^1.0.0"
+  }
 }
