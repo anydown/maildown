@@ -1,19 +1,31 @@
 {
-  "name": "maildown",
+  "name": "@anydown/maildown",
   "version": "1.0.2",
-  "description": "",
+  "description": "Markdownから日本企業っぽいメールに変換します。",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "browserify index.js -o bundle.js",
     "dev": "watchify index.js -o bundle.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "hashrock",
+  "license": "MIT",
   "devDependencies": {
     "browserify": "^14.3.0",
     "markdown-to-ast": "^3.4.0",
     "txt-ast-traverse": "^1.2.1",
     "watchify": "^3.9.0"
-  }
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anydown/maildown.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anydown/maildown/issues"
+  },
+  "homepage": "https://github.com/anydown/maildown#readme"
 }
