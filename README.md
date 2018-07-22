@@ -10,7 +10,7 @@ Markdown から日本企業っぽいメールに変換します。
 
 `npm install @anydown/maildown`
 
-```
+```js
 const maildown = require("@anydown/maildown");
 
 const converted = maildown(`## test
