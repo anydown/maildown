@@ -60,6 +60,26 @@ tape("markdown: 見出し２", function(t) {
   t.equals(convert(input), expected);
 });
 
+tape("markdown: リストの改行対応", function(t) {
+  t.plan(1);
+  let input = `* そもそもリストに３０文字以上の文をいれるのがナンセンスなのかもしれませんが対応していただけると嬉しいです。`;
+
+  let expected = `　・そもそもリストに３０文字以上の文をいれるのがナンセンスなのかもしれ
+　　ませんが対応していただけると嬉しいです。
+`;
+  t.equals(convert(input), expected);
+});
+
+tape("markdown: OLリストの改行対応", function(t) {
+  t.plan(1);
+  let input = `1. そもそもリストに３０文字以上の文をいれるのがナンセンスなのかもしれませんが対応していただけると嬉しいです。`;
+
+  let expected = `　（1）そもそもリストに３０文字以上の文をいれるのがナンセンスなのかもしれ
+　　　 ませんが対応していただけると嬉しいです。
+`;
+  t.equals(convert(input), expected);
+});
+
 tape("markdown: 強調（何もしない）", function(t) {
   t.plan(1);
   let input = `ここを*強調*したい`;
