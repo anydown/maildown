@@ -57,4 +57,4 @@ typings/
 # dotenv environment variables file
 .env
 
-./examples/bundle.js
+examples/bundle.js
