@@ -20,7 +20,7 @@ const converted = maildown(`## test
 - this
 - is
 - test
-`);
+`, {lineLength: 70});
 
 console.log(converted);
 //>  ■test
@@ -29,3 +29,9 @@ console.log(converted);
 //>  　・is
 //>  　・test
 ```
+
+# Options
+
+| オプション名 | 説明             | デフォルト |
+| ------------ | ---------------- | ---------- |
+| lineLength   | １行の最大文字長 | 70         |
