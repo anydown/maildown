@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.3.1"></a>
+## [1.3.1](https://github.com/anydown/maildown/compare/v1.3.0...v1.3.1) (2018-07-22)
+
+
+### Bug Fixes
+
+* **hr:** HRの文字種を変更(RC3676対応) Fix [#5](https://github.com/anydown/maildown/issues/5) ([8045068](https://github.com/anydown/maildown/commit/8045068))
+* **list:** リストが制限文字数を超過した場合に改行するように変更 Fix [#6](https://github.com/anydown/maildown/issues/6) ([d1752b2](https://github.com/anydown/maildown/commit/d1752b2))
+
+
+
 <a name="1.3.0"></a>
 # [1.3.0](https://github.com/anydown/maildown/compare/v1.1.0...v1.3.0) (2018-07-22)
 
