@@ -38,5 +38,5 @@ console.log(converted);
 
 # Who uses maildown
 
- - [Markdown to Plain](https://chrome.google.com/webstore/detail/markdown-to-plain/kcfemfieficedfhplhkmlpeddpkgiaok) : Chrome拡張 by 
- - [md2mail](https://marketplace.visualstudio.com/items?itemName=satopirka.md2mail) : VSCode拡張 by @satopirka
+ - [Markdown to Plain](https://chrome.google.com/webstore/detail/markdown-to-plain/kcfemfieficedfhplhkmlpeddpkgiaok) : Chrome拡張 by [@mtgto](https://github.com/mtgto)
+ - [md2mail](https://marketplace.visualstudio.com/items?itemName=satopirka.md2mail) : VSCode拡張 by [@satopirka](https://github.com/satopirka)
