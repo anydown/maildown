@@ -10,7 +10,7 @@ Markdown から日本企業っぽいメールに変換します。
 
 https://maildown-example.netlify.com/
 
-![image](https://user-images.githubusercontent.com/3132889/43113124-040fa760-8f34-11e8-9471-c2b0edd984e2.png)
+![image](https://user-images.githubusercontent.com/3132889/43113200-59139640-8f34-11e8-8c5e-e3aa5326a572.png)
 
 🤔
 
