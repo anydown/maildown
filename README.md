@@ -6,6 +6,15 @@ Markdown から日本企業っぽいメールに変換します。
 
 [![npm version](https://badge.fury.io/js/%40anydown%2Fmaildown.svg)](https://badge.fury.io/js/%40anydown%2Fmaildown)
 
+# Demo
+
+https://maildown-example.netlify.com/
+
+![image](https://user-images.githubusercontent.com/3132889/43112938-2fa3a45e-8f33-11e8-8024-a888c9e2eb6d.png)
+
+🤔
+
+
 # NPM から利用する
 
 `npm install @anydown/maildown`
