@@ -35,3 +35,8 @@ console.log(converted);
 | オプション名 | 説明             | デフォルト |
 | ------------ | ---------------- | ---------- |
 | lineLength   | １行の最大文字長 | 70         |
+
+# Who uses maildown
+
+ - [Markdown to Plain](https://chrome.google.com/webstore/detail/markdown-to-plain/kcfemfieficedfhplhkmlpeddpkgiaok) : Chrome拡張 by 
+ - [md2mail](https://marketplace.visualstudio.com/items?itemName=satopirka.md2mail) : VSCode拡張 by @satopirka
